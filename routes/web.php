@@ -74,4 +74,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/requests/{skillRequest}/messages', [MessageController::class, 'store'])->name('messages.store');
 });
 
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 require __DIR__.'/auth.php';
