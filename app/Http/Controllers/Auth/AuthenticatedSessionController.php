@@ -31,10 +31,13 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        $request->session()->regenerate();
+        $request->session()->pull('url.intended');
 
-        // Change this line to redirect to root URL
-        return redirect()->intended('/');
+        // Fix: Use route name with the route helper function
+        return redirect()->intended(route('home'));
+
+        // OR simply redirect to root
+        // return redirect()->intended('/');
     }
 
     /**

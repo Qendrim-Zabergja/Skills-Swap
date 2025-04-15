@@ -1,4 +1,5 @@
 <template>
+
   <Head title="Log in" />
 
   <div class="min-h-screen flex flex-col">
@@ -31,54 +32,38 @@
             <!-- Email -->
             <div class="mb-4">
               <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                id="email"
-                type="email"
-                v-model="form.email"
+              <input id="email" type="email" v-model="form.email"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="name@example.com"
-                required
-                autofocus
-              />
+                placeholder="name@example.com" required autofocus />
             </div>
 
             <!-- Password -->
             <div class="mb-6">
               <div class="flex justify-between mb-1">
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <Link
-                  v-if="canResetPassword"
-                  :href="route('password.request')"
-                  class="text-sm text-gray-600 hover:underline"
-                >
-                  Forgot password?
+                <Link v-if="canResetPassword" :href="route('password.request')"
+                  class="text-sm text-gray-600 hover:underline">
+                Forgot password?
                 </Link>
               </div>
-              <input
-                id="password"
-                type="password"
-                v-model="form.password"
+              <input id="password" type="password" v-model="form.password"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                required
-                autocomplete="current-password"
-              />
+                required autocomplete="current-password" />
             </div>
 
             <!-- Login Button -->
-            <button
-              type="submit"
+            <button type="submit"
               class="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              :disabled="form.processing"
-            >
+              :disabled="form.processing">
               Log in
             </button>
 
             <!-- Sign Up Link -->
             <div class="text-center mt-6">
               <p class="text-sm text-gray-600">
-                Don't have an account? 
+                Don't have an account?
                 <Link :href="route('register')" class="text-black hover:underline">
-                  Sign up
+                Sign up
                 </Link>
               </p>
             </div>
@@ -131,7 +116,13 @@ export default defineComponent({
 
     const submit = () => {
       form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+        preserveScroll: true,
+        onSuccess: () => {
+          window.location.href = route('home'); // Force full page reload
+        },
+        onError: (errors) => {
+          console.log('Login errors:', errors);
+        }
       });
     };
 
