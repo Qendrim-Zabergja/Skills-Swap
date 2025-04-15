@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +19,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        $user->load('skills');
+        
+        $incomingRequests = $user->receivedRequests()->with(['sender', 'skill'])->latest()->get();
+        $outgoingRequests = $user->sentRequests()->with(['receiver', 'skill'])->latest()->get();
+        
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'user' => $user,
+            'incomingRequests' => $incomingRequests,
+            'outgoingRequests' => $outgoingRequests
         ]);
     }
 
@@ -33,6 +43,15 @@ class ProfileController extends Controller
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
+        }
+
+        if ($request->hasFile('profile_image')) {
+            if ($request->user()->profile_image) {
+                Storage::disk('public')->delete($request->user()->profile_image);
+            }
+            
+            $path = $request->file('profile_image')->store('profile-images', 'public');
+            $request->user()->profile_image = $path;
         }
 
         $request->user()->save();
