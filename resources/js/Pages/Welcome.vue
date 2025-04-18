@@ -4,24 +4,7 @@
 
     <div class="min-h-screen bg-white">
         <!-- Header -->
-        <header class="border-b border-gray-200">
-            <div class="container mx-auto px-4 py-3 flex  items-center justify-between ">
-                <Link :href="route('home')" class="font-bold text-lg">SkillSwap</Link>
-                <Link class="mr-4 text-sm font-bold">Browse Skills</Link>
-
-                <div v-if="$page.props.auth.user">
-                    <Link :href="route('profile.edit')" class="mr-4 text-sm">My Profile</Link>
-                    <Link :href="route('logout')" method="post" as="button"
-                        class="bg-black text-white px-3 py-1 text-sm rounded">
-                    Log out
-                    </Link>
-                </div>
-                <div v-else>
-                    <Link :href="route('login')" class="mr-4 text-sm">Log in</Link>
-                    <Link :href="route('register')" class="bg-black text-white px-3 py-1 text-sm rounded">Sign up</Link>
-                </div>
-            </div>
-        </header>
+        <Navbar />
 
         <main>
             <!-- Hero Section -->
@@ -116,7 +99,7 @@
         <!-- Footer -->
         <footer class="bg-gray-100 py-3 text-xs text-gray-500 mt-10">
             <div class="container mx-auto px-4 flex justify-between items-center">
-                <div>© 2025 SkillSwap. All rights reserved.</div>
+                <div> 2025 SkillSwap. All rights reserved.</div>
                 <div class="flex space-x-4">
                     <a href="#" class="hover:underline">About</a>
                     <a href="#" class="hover:underline">Terms</a>
@@ -132,11 +115,13 @@
 import { defineComponent } from 'vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import { Link } from '@inertiajs/vue3';
+import Navbar from '../Components/Navbar.vue';
 
 export default defineComponent({
     components: {
         Head,
         Link,
+        Navbar,
     },
 
     props: {

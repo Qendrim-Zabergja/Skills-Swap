@@ -52,6 +52,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
+Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
 Route::get('/skills/{skill}', [SkillController::class, 'show'])->name('skills.show');
 
 Route::middleware('auth')->group(function () {

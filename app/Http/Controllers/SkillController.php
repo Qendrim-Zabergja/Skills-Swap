@@ -69,4 +69,49 @@ class SkillController extends Controller
         
         return redirect()->route('profile.edit')->with('success', 'Skill deleted successfully.');
     }
+
+    public function browse()
+    {
+        return Inertia::render('Skills/Browse');
+    }
+
+    public function getSkills(Request $request)
+    {
+        $query = Skill::with('user');
+
+        // Apply search filter
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply category filters
+        if (!empty($request->categories)) {
+            $query->whereIn('category', $request->categories);
+        }
+
+        // Get paginated results
+        $skills = $query->latest()
+            ->paginate(10)
+            ->through(function ($skill) {
+                return [
+                    'id' => $skill->id,
+                    'title' => $skill->title,
+                    'description' => $skill->description,
+                    'category' => $skill->category,
+                    'rating' => 4.5, // Placeholder until we implement ratings
+                    'user' => [
+                        'id' => $skill->user->id,
+                        'name' => $skill->user->name,
+                        'profile_image' => null // Placeholder until we implement profile photos
+                    ]
+                ];
+            });
+
+        return response()->json($skills);
+    }
 }
