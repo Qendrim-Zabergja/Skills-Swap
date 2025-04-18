@@ -106,7 +106,8 @@ class SkillController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'profile_photo' => $user->profile_photo_url ?? null,
+                'surname' => $user->surname,
+                'profile_photo' => $user->profile_photo_url ?? asset('images/default-avatar.png'),
                 'location' => $user->location ?? 'Location not specified',
                 'rating' => 5, // Placeholder until we implement ratings
                 'swaps_completed' => $user->skills->count(),
