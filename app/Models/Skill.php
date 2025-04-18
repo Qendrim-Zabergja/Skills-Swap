@@ -14,6 +14,7 @@ class Skill extends Model
         'title',
         'description',
         'category',
+        'type'
     ];
 
     public function user()
