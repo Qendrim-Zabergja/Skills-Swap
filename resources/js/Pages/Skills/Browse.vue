@@ -224,7 +224,7 @@ export default {
         async fetchSkills() {
             this.loading = true;
             try {
-                const response = await axios.get('http://127.0.0.1:8000/api/skills', {
+                const response = await axios.get('/api/skills', {
                     params: {
                         page: this.currentPage,
                         search: this.searchQuery,

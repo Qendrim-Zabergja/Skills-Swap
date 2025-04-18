@@ -55,6 +55,15 @@ Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
 Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
 Route::get('/skills/{skill}', [SkillController::class, 'show'])->name('skills.show');
 
+Route::prefix('api')->group(function () {
+    Route::get('/skills', [SkillController::class, 'getSkills']);
+    Route::get('/featured-skills', [SkillController::class, 'featured']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/requests', [RequestController::class, 'store']);
+    });
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', function () {
         return Inertia::render('Profile/Edit');
