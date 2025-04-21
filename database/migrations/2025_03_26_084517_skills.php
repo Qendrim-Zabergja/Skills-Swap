@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->text('description');
-            $table->string('category');
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->enum('type', ['teach', 'learn'])->default('teach');
             $table->timestamps();
         });
     }

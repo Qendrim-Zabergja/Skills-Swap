@@ -11,9 +11,8 @@ class Skill extends Model
 
     protected $fillable = [
         'user_id',
-        'title',
+        'name',
         'description',
-        'category',
         'type'
     ];
 

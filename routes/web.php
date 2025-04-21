@@ -1,39 +1,10 @@
 <?php
 
-// use App\Http\Controllers\ProfileController;
-// use Illuminate\Foundation\Application;
-// use Illuminate\Support\Facades\Route;
-// use Inertia\Inertia;
-
-// Route::get('/', function () {
-//     return Inertia::render('Welcome', [
-//         'canLogin' => Route::has('login'),
-//         'canRegister' => Route::has('register'),
-//         'laravelVersion' => Application::VERSION,
-//         'phpVersion' => PHP_VERSION,
-//     ]);
-// });
-
-// Route::get('/dashboard', function () {
-//     return Inertia::render('Dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
-
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-// });
-
-// require __DIR__.'/auth.php';
-
-
-
-
-
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\RequestController;
+use App\Http\Controllers\SwapRequestController;
 use App\Http\Controllers\SkillController;
+use App\Http\Controllers\RequestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -65,18 +36,28 @@ Route::prefix('api')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile/edit', function () {
-        return Inertia::render('Profile/Edit');
-    })->name('profile.edit');
-    
-    
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Skills routes
     Route::post('/skills', [SkillController::class, 'store'])->name('skills.store');
     Route::put('/skills/{skill}', [SkillController::class, 'update'])->name('skills.update');
     Route::delete('/skills/{skill}', [SkillController::class, 'destroy'])->name('skills.destroy');
+    
+    // Swap requests routes
+    Route::get('/requests', [SwapRequestController::class, 'index'])->name('requests.index');
+    Route::post('/requests', [SwapRequestController::class, 'store'])->name('requests.store');
+    Route::post('/requests/{request}/accept', [SwapRequestController::class, 'accept'])->name('requests.accept');
+    Route::post('/requests/{request}/decline', [SwapRequestController::class, 'decline'])->name('requests.decline');
+    Route::post('/requests/{request}/cancel', [SwapRequestController::class, 'cancel'])->name('requests.cancel');
+    
+    // Messages routes
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages/{user}', [MessageController::class, 'store'])->name('messages.store');
     
     // Requests routes
     Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
@@ -91,7 +72,5 @@ Route::middleware('auth')->group(function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
-
-
 
 require __DIR__.'/auth.php';

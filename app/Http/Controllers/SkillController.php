@@ -38,13 +38,11 @@ class SkillController extends Controller
     {
         $request->validate([
             'teachingSkills' => 'array',
-            'teachingSkills.*.title' => 'required|string|max:255',
+            'teachingSkills.*.name' => 'required|string|max:255',
             'teachingSkills.*.description' => 'required|string',
-            'teachingSkills.*.category' => 'required|string|max:255',
             'learningSkills' => 'array',
-            'learningSkills.*.title' => 'required|string|max:255',
+            'learningSkills.*.name' => 'required|string|max:255',
             'learningSkills.*.description' => 'nullable|string',
-            'learningSkills.*.category' => 'required|string|max:255',
         ]);
 
         // Delete existing skills
@@ -53,20 +51,18 @@ class SkillController extends Controller
         // Store teaching skills
         foreach ($request->teachingSkills as $skill) {
             $request->user()->skills()->create([
-                'title' => $skill['title'],
+                'name' => $skill['name'],
                 'description' => $skill['description'],
-                'category' => $skill['category'],
-                'type' => 'teaching'
+                'type' => 'teach'
             ]);
         }
 
         // Store learning skills
         foreach ($request->learningSkills as $skill) {
             $request->user()->skills()->create([
-                'title' => $skill['title'],
+                'name' => $skill['name'],
                 'description' => $skill['description'] ?? '',
-                'category' => $skill['category'],
-                'type' => 'learning'
+                'type' => 'learn'
             ]);
         }
         
@@ -78,9 +74,9 @@ class SkillController extends Controller
         // $this->authorize('update', $skill);
         
         $request->validate([
-            'title' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'category' => 'required|string|max:255',
+            'type' => 'required|in:teach,learn'
         ]);
 
         $skill->update($request->all());
@@ -100,7 +96,7 @@ class SkillController extends Controller
     public function browse()
     {
         $users = User::with(['skills' => function($q) {
-            $q->select('id', 'user_id', 'title', 'description', 'category', 'type');
+            $q->select('id', 'user_id', 'name', 'description', 'type');
         }])->get()
         ->map(function ($user) {
             return [
@@ -111,22 +107,20 @@ class SkillController extends Controller
                 'location' => $user->location ?? 'Location not specified',
                 'rating' => 5, // Placeholder until we implement ratings
                 'swaps_completed' => $user->skills->count(),
-                'teaching_skills' => $user->skills->where('type', 'teaching')
+                'teaching_skills' => $user->skills->where('type', 'teach')
                     ->map(function($skill) {
                         return [
                             'id' => $skill->id,
-                            'name' => $skill->title,
-                            'description' => $skill->description,
-                            'category' => $skill->category
+                            'name' => $skill->name,
+                            'description' => $skill->description
                         ];
                     })->values(),
-                'learning_skills' => $user->skills->where('type', 'learning')
+                'learning_skills' => $user->skills->where('type', 'learn')
                     ->map(function($skill) {
                         return [
                             'id' => $skill->id,
-                            'name' => $skill->title,
-                            'description' => $skill->description,
-                            'category' => $skill->category
+                            'name' => $skill->name,
+                            'description' => $skill->description
                         ];
                     })->values()
             ];
@@ -145,15 +139,9 @@ class SkillController extends Controller
         if ($request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
-        }
-
-        // Apply category filters
-        if (!empty($request->categories)) {
-            $query->whereIn('category', $request->categories);
         }
 
         // Get paginated results
@@ -162,14 +150,14 @@ class SkillController extends Controller
             ->through(function ($skill) {
                 return [
                     'id' => $skill->id,
-                    'title' => $skill->title,
+                    'name' => $skill->name,
                     'description' => $skill->description,
-                    'category' => $skill->category,
+                    'type' => $skill->type,
                     'rating' => 4.5, // Placeholder until we implement ratings
                     'user' => [
                         'id' => $skill->user->id,
                         'name' => $skill->user->name,
-                        'profile_image' => null // Placeholder until we implement profile photos
+                        'profile_photo_url' => $skill->user->profile_photo_url
                     ]
                 ];
             });
