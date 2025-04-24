@@ -84,7 +84,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/requests/{skillRequest}', [RequestController::class, 'update'])->name('requests.update');
     
     // Messages routes
-    Route::get('/requests/{request}/messages', [MessageController::class, 'index'])->name('messages.index');
+   
+    Route::get('/requests/{skillRequest}/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/requests/{skillRequest}/messages', [MessageController::class, 'store'])->name('messages.store');
 });
 

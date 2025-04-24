@@ -4,30 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Events\NewMessage;
 use App\Models\Message;
-use App\Models\Request as SkillRequest;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Now you can use Laravel's Request without conflict
+use App\Models\SkillRequest; // Great! You've renamed the model
 use Inertia\Inertia;
 
 class MessageController extends Controller
 {
-    public function index(SkillRequest $request)
+    public function index(Request $request, SkillRequest $skillRequest)
     {
-        // $this->authorize('view', $request);
-        
-        $request->load(['sender', 'receiver', 'skill']);
-        $messages = $request->messages()->with(['sender'])->orderBy('created_at')->get();
+        $skillRequest->load(['sender', 'receiver', 'skill']);
+        $messages = $skillRequest->messages()->with(['sender'])->orderBy('created_at')->get();
         
         // Mark messages as read
-        $request->messages()
+        $skillRequest->messages()
             ->where('receiver_id', auth()->id())
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
         
         return Inertia::render('Messages/Index', [
-            'request' => $request,
+            'request' => $skillRequest,
             'messages' => $messages
         ]);
-    }
+    } // This closing brace was missing in your code
 
     public function store(Request $request, SkillRequest $skillRequest)
     {
