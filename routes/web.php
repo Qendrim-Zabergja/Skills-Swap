@@ -5,6 +5,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SwapRequestController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\BrowseController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Browse routes
+    Route::get('/browse', [BrowseController::class, 'index'])->name('browse.index');
     
     // Skills routes
     Route::post('/skills', [SkillController::class, 'store'])->name('skills.store');

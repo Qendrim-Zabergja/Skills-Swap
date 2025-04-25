@@ -20,74 +20,18 @@ class ProfileController extends Controller
     /**
      * Display the user's profile page.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request)
     {
         $user = $request->user();
-        
-        return Inertia::render('Profile/Edit', [
-            'auth' => [
-                'user' => array_merge($user->toArray(), [
-                    'profile_photo_url' => $user->profile_photo_url,
-                ]),
-            ],
-            'skills' => $user->skills()->get(),
-            'incomingRequests' => SwapRequest::with('user')
-                ->where('recipient_id', $user->id)
-                ->where('status', 'pending')
-                ->get()
-                ->map(function ($request) {
-                    return [
-                        'id' => $request->id,
-                        'user' => [
-                            'id' => $request->user->id,
-                            'name' => $request->user->name,
-                            'profile_photo_url' => $request->user->profile_photo_url,
-                        ],
-                        'skill_wanted' => $request->skill_wanted,
-                        'skill_offered' => $request->skill_offered,
-                    ];
-                }),
-            'outgoingRequests' => SwapRequest::with('recipient')
-                ->where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->get()
-                ->map(function ($request) {
-                    return [
-                        'id' => $request->id,
-                        'recipient' => [
-                            'id' => $request->recipient->id,
-                            'name' => $request->recipient->name,
-                            'profile_photo_url' => $request->recipient->profile_photo_url,
-                        ],
-                        'skill_wanted' => $request->skill_wanted,
-                        'skill_offered' => $request->skill_offered,
-                    ];
-                }),
-            'messages' => Message::with('user')
-                ->where('recipient_id', $user->id)
-                ->orWhere('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->groupBy(function ($message) use ($user) {
-                    return $message->user_id === $user->id ? $message->recipient_id : $message->user_id;
-                })
-                ->map(function ($messages) use ($user) {
-                    $lastMessage = $messages->first();
-                    $otherUser = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
-                    
-                    return [
-                        'id' => $lastMessage->id,
-                        'user' => [
-                            'id' => $otherUser->id,
-                            'name' => $otherUser->name,
-                            'profile_photo_url' => $otherUser->profile_photo_url,
-                        ],
-                        'skill_exchange' => $lastMessage->skill_exchange,
-                        'last_message' => $lastMessage->content,
-                        'time' => Carbon::parse($lastMessage->created_at)->diffForHumans(),
-                    ];
-                })
-                ->values(),
+        $teachingSkills = $user->skills()->where('type', 'teaching')->get();
+        $learningSkills = $user->skills()->where('type', 'learning')->get();
+
+        return Inertia::render('Edit', [
+            'user' => $user,
+            'teachingSkills' => $teachingSkills,
+            'learningSkills' => $learningSkills,
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => session('status'),
         ]);
     }
 
@@ -96,15 +40,54 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Update user info
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'location' => $validated['location'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return Redirect::route('profile.edit');
+        // Handle teaching skills
+        if (isset($validated['teachingSkills'])) {
+            $user->skills()->where('type', 'teaching')->delete();
+            
+            foreach ($validated['teachingSkills'] as $skill) {
+                if (!empty($skill['name'])) {
+                    $user->skills()->create([
+                        'name' => $skill['name'],
+                        'category' => $skill['category'],
+                        'type' => 'teaching'
+                    ]);
+                }
+            }
+        }
+
+        // Handle learning skills
+        if (isset($validated['learningSkills'])) {
+            $user->skills()->where('type', 'learning')->delete();
+            
+            foreach ($validated['learningSkills'] as $skill) {
+                if (!empty($skill['name'])) {
+                    $user->skills()->create([
+                        'name' => $skill['name'],
+                        'category' => $skill['category'],
+                        'type' => 'learning'
+                    ]);
+                }
+            }
+        }
+
+        return back();
     }
 
     /**
