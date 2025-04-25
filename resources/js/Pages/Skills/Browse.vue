@@ -120,20 +120,54 @@
                             </div>
 
                             <!-- Teaching Categories -->
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <span 
-                                    v-for="category in getUniqueCategories(user.teaching_skills)"
-                                    :key="category"
-                                    class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                >
-                                    {{ category }}
-                                </span>
-                            </div>
-
-                            <!-- Skills I Can Teach -->
                             <div class="mt-4">
-                                <h4 class="text-sm font-medium text-gray-700 mb-2">Skills I Can Teach</h4>
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-sm font-medium text-gray-700">Skills I Can Teach</h4>
+                                    <div class="flex flex-wrap gap-2 relative">
+                                        <template v-if="getUniqueCategories(user.teaching_skills).length <= 2">
+                                            <span 
+                                                v-for="category in getUniqueCategories(user.teaching_skills)"
+                                                :key="category"
+                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
+                                            >
+                                                {{ category }}
+                                            </span>
+                                        </template>
+                                        <template v-else>
+                                            <span 
+                                                v-for="category in getUniqueCategories(user.teaching_skills).slice(0, 2)"
+                                                :key="category"
+                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
+                                            >
+                                                {{ category }}
+                                            </span>
+                                            <div class="relative inline-block">
+                                                <button 
+                                                    @click="toggleTeachingCategories(user.id)"
+                                                    class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
+                                                >
+                                                    +{{ getUniqueCategories(user.teaching_skills).length - 2 }}
+                                                </button>
+                                                <!-- Dropdown -->
+                                                <div 
+                                                    v-if="expandedTeachingCategories[user.id]"
+                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
+                                                >
+                                                    <span 
+                                                        v-for="category in getUniqueCategories(user.teaching_skills).slice(2)"
+                                                        :key="category"
+                                                        class="block px-4 py-2 text-sm text-gray-700"
+                                                    >
+                                                        {{ category }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Skills list -->
+                                <div class="flex flex-wrap gap-2 mt-2">
                                     <span 
                                         v-for="skill in user.teaching_skills" 
                                         :key="skill.id"
@@ -145,20 +179,54 @@
                             </div>
 
                             <!-- Learning Categories -->
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <span 
-                                    v-for="category in getUniqueCategories(user.learning_skills)"
-                                    :key="category"
-                                    class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                >
-                                    {{ category }}
-                                </span>
-                            </div>
-
-                            <!-- Skills I Want to Learn -->
                             <div class="mt-4">
-                                <h4 class="text-sm font-medium text-gray-700 mb-2">Skills I Want to Learn</h4>
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-sm font-medium text-gray-700">Skills I Want to Learn</h4>
+                                    <div class="flex flex-wrap gap-2 relative">
+                                        <template v-if="getUniqueCategories(user.learning_skills).length <= 2">
+                                            <span 
+                                                v-for="category in getUniqueCategories(user.learning_skills)"
+                                                :key="category"
+                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
+                                            >
+                                                {{ category }}
+                                            </span>
+                                        </template>
+                                        <template v-else>
+                                            <span 
+                                                v-for="category in getUniqueCategories(user.learning_skills).slice(0, 2)"
+                                                :key="category"
+                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
+                                            >
+                                                {{ category }}
+                                            </span>
+                                            <div class="relative inline-block">
+                                                <button 
+                                                    @click="toggleLearningCategories(user.id)"
+                                                    class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
+                                                >
+                                                    +{{ getUniqueCategories(user.learning_skills).length - 2 }}
+                                                </button>
+                                                <!-- Dropdown -->
+                                                <div 
+                                                    v-if="expandedLearningCategories[user.id]"
+                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
+                                                >
+                                                    <span 
+                                                        v-for="category in getUniqueCategories(user.learning_skills).slice(2)"
+                                                        :key="category"
+                                                        class="block px-4 py-2 text-sm text-gray-700"
+                                                    >
+                                                        {{ category }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Skills list -->
+                                <div class="flex flex-wrap gap-2 mt-2">
                                     <span 
                                         v-for="skill in user.learning_skills" 
                                         :key="skill.id"
@@ -223,7 +291,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Navbar from '@/Components/Navbar.vue';
 
 const props = defineProps({
@@ -255,6 +323,9 @@ const filters = ref({
     offeringSkillsIWant: false,
     perfectMatchesOnly: false
 });
+
+const expandedTeachingCategories = ref({});
+const expandedLearningCategories = ref({});
 
 const resetFilters = () => {
     selectedCategories.value = [];
@@ -363,4 +434,34 @@ const formatDate = (date) => {
 const getUniqueCategories = (skills) => {
     return [...new Set(skills.map(skill => skill.category))].filter(Boolean);
 };
+
+const toggleTeachingCategories = (userId) => {
+    expandedTeachingCategories.value[userId] = !expandedTeachingCategories.value[userId];
+    // Close other dropdowns when opening this one
+    if (expandedTeachingCategories.value[userId]) {
+        expandedLearningCategories.value[userId] = false;
+    }
+};
+
+const toggleLearningCategories = (userId) => {
+    expandedLearningCategories.value[userId] = !expandedLearningCategories.value[userId];
+    // Close other dropdowns when opening this one
+    if (expandedLearningCategories.value[userId]) {
+        expandedTeachingCategories.value[userId] = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!target.closest('.relative.inline-block')) {
+            Object.keys(expandedTeachingCategories.value).forEach(key => {
+                expandedTeachingCategories.value[key] = false;
+            });
+            Object.keys(expandedLearningCategories.value).forEach(key => {
+                expandedLearningCategories.value[key] = false;
+            });
+        }
+    });
+});
 </script>
