@@ -58,30 +58,30 @@ class ProfileController extends Controller
         $user->save();
 
         // Handle teaching skills
-        if (isset($validated['teachingSkills'])) {
-            $user->skills()->where('type', 'teaching')->delete();
-            
+        $user->skills()->where('type', 'teaching')->delete();
+        if (isset($validated['teachingSkills']) && is_array($validated['teachingSkills'])) {
             foreach ($validated['teachingSkills'] as $skill) {
-                if (!empty($skill['name'])) {
+                if (!empty($skill['name']) && !empty($skill['category'])) {
                     $user->skills()->create([
                         'name' => $skill['name'],
                         'category' => $skill['category'],
-                        'type' => 'teaching'
+                        'type' => 'teaching',
+                        'description' => $skill['name'] // Using name as description for now
                     ]);
                 }
             }
         }
 
         // Handle learning skills
-        if (isset($validated['learningSkills'])) {
-            $user->skills()->where('type', 'learning')->delete();
-            
+        $user->skills()->where('type', 'learning')->delete();
+        if (isset($validated['learningSkills']) && is_array($validated['learningSkills'])) {
             foreach ($validated['learningSkills'] as $skill) {
-                if (!empty($skill['name'])) {
+                if (!empty($skill['name']) && !empty($skill['category'])) {
                     $user->skills()->create([
                         'name' => $skill['name'],
                         'category' => $skill['category'],
-                        'type' => 'learning'
+                        'type' => 'learning',
+                        'description' => $skill['name'] // Using name as description for now
                     ]);
                 }
             }
