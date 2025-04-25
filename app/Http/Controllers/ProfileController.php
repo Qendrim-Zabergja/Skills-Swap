@@ -26,7 +26,7 @@ class ProfileController extends Controller
         $teachingSkills = $user->skills()->where('type', 'teaching')->get();
         $learningSkills = $user->skills()->where('type', 'learning')->get();
 
-        return Inertia::render('Edit', [
+        return Inertia::render('Profile/Edit', [
             'user' => $user,
             'teachingSkills' => $teachingSkills,
             'learningSkills' => $learningSkills,
