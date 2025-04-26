@@ -91,27 +91,37 @@
 
           <!-- Incoming Requests -->
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-white border rounded-lg">
+            <div v-for="request in incomingRequests" :key="request.id" class="flex items-center justify-between p-4 bg-white border rounded-lg">
               <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                  EJ
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
+                  {{ getInitials(request.sender.name) }}
                 </div>
                 <div>
-                  <h4 class="font-medium">Emily Johnson</h4>
+                  <h4 class="text-sm font-medium">{{ request.sender.name }}</h4>
                   <div class="text-sm text-gray-500">
-                    <p>Wants to learn: Web Development</p>
-                    <p>Offers to teach: Digital Marketing</p>
+                    <span>Wants to learn: {{ request.learning_skill }}</span>
+                    <br>
+                    <span>Offers to teach: {{ request.teaching_skill }}</span>
                   </div>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <button class="px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
+                <Link
+                  :href="route('messages.show', request.sender.id)"
+                  class="px-3 py-1 text-sm text-gray-600 hover:text-gray-700"
+                >
                   Message
-                </button>
-                <button class="px-3 py-1 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800">
+                </Link>
+                <button 
+                  @click="acceptRequest(request.id)"
+                  class="px-3 py-1 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-800"
+                >
                   Accept
                 </button>
-                <button class="px-3 py-1 text-sm text-red-600 hover:text-red-700">
+                <button 
+                  @click="declineRequest(request.id)"
+                  class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                >
                   Decline
                 </button>
               </div>
@@ -121,26 +131,44 @@
           <!-- Outgoing Requests -->
           <h3 class="font-medium text-lg mt-8 mb-4">Outgoing Requests</h3>
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-white border rounded-lg">
+            <div v-for="request in outgoingRequests" :key="request.id" class="flex items-center justify-between p-4 bg-white border rounded-lg">
               <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                  SW
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
+                  {{ getInitials(request.recipient.name) }}
                 </div>
                 <div>
-                  <h4 class="font-medium">Sarah Williams</h4>
+                  <h4 class="text-sm font-medium">{{ request.recipient.name }}</h4>
                   <div class="text-sm text-gray-500">
-                    <p>You want to learn: Spanish Language</p>
-                    <p>You offer to teach: UX/UI Design</p>
+                    <span>You want to learn: {{ request.learning_skill }}</span>
+                    <br>
+                    <span>You offer to teach: {{ request.teaching_skill }}</span>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1">
+                    Sent {{ formatDate(request.created_at) }}
                   </div>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <button class="px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
+                <Link
+                  :href="route('messages.show', request.recipient.id)"
+                  class="px-3 py-1 text-sm text-gray-600 hover:text-gray-700"
+                >
                   Message
-                </button>
-                <button class="px-3 py-1 text-sm text-red-600 hover:text-red-700">
+                </Link>
+                <button 
+                  v-if="request.status === 'pending'"
+                  @click="cancelRequest(request.id)"
+                  class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                >
                   Cancel
                 </button>
+                <span v-else class="text-sm" :class="{
+                  'text-green-600': request.status === 'accepted',
+                  'text-red-600': request.status === 'declined',
+                  'text-gray-600': request.status === 'cancelled'
+                }">
+                  {{ request.status.charAt(0).toUpperCase() + request.status.slice(1) }}
+                </span>
               </div>
             </div>
           </div>
@@ -334,8 +362,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { useForm, Link } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Navbar from '@/Components/Navbar.vue';
 
@@ -343,6 +370,8 @@ const props = defineProps({
   user: Object,
   teachingSkills: Array,
   learningSkills: Array,
+  incomingRequests: Array,
+  outgoingRequests: Array,
 });
 
 const showEditModal = ref(false);
@@ -407,11 +436,32 @@ const removeLearningSkill = (skill) => {
   form.learningSkills = form.learningSkills.filter(s => s.name !== skill.name);
 };
 
+const acceptRequest = (requestId) => {
+  router.post(route('skill-requests.accept', requestId));
+};
+
+const declineRequest = (requestId) => {
+  router.post(route('skill-requests.decline', requestId));
+};
+
+const cancelRequest = (requestId) => {
+  router.post(route('skill-requests.cancel', requestId));
+};
+
 const saveProfile = () => {
   form.patch(route('profile.update'), {
     onSuccess: () => {
       showEditModal.value = false;
     }
+  });
+};
+
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 };
 </script>

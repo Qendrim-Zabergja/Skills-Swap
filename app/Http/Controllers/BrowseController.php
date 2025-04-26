@@ -59,6 +59,9 @@ class BrowseController extends Controller
                 'last_page' => $users->lastPage(),
                 'per_page' => $users->perPage(),
                 'total' => $users->total(),
+            ],
+            'auth' => [
+                'user' => auth()->user()
             ]
         ]);
     }

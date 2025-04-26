@@ -150,7 +150,9 @@ export default defineComponent({
         },
 
         getInitials(firstName, lastName) {
-            return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+            firstName = firstName || '';
+            lastName = lastName || '';
+            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
         },
 
         truncate(text, length) {

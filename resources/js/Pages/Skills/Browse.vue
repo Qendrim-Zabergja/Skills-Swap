@@ -243,7 +243,7 @@
                                     Member since {{ formatDate(user.created_at) }}
                                 </div>
                                 <button 
-                                    @click="requestSwap(user)"
+                                    @click="openRequestModal(user)"
                                     class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800"
                                 >
                                     Request Swap
@@ -288,18 +288,28 @@
             </div>
         </div>
     </div>
+
+    <SkillExchangeModal 
+        :show="showRequestModal" 
+        :user="auth.user" 
+        :recipient="selectedUser" 
+        @close="showRequestModal = false"
+    />
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { Head } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
+import SkillExchangeModal from '@/Components/SkillExchangeModal.vue';
 
 const props = defineProps({
-    users: {
-        type: Array,
-        required: true
-    }
+    users: Array,
+    auth: Object,
 });
+
+const showRequestModal = ref(false);
+const selectedUser = ref(null);
 
 const categories = [
     'Design',
@@ -413,9 +423,10 @@ const totalPages = computed(() =>
     Math.ceil(filteredUsers.value.length / itemsPerPage)
 );
 
-const requestSwap = (user) => {
-    // TODO: Implement swap request functionality
-    console.log('Requesting swap with user:', user.id);
+const openRequestModal = (user) => {
+    console.log('Opening modal for user:', user);
+    selectedUser.value = user;
+    showRequestModal.value = true;
 };
 
 const getInitials = (name) => {

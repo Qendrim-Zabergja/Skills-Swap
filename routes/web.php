@@ -6,6 +6,7 @@ use App\Http\Controllers\SwapRequestController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\BrowseController;
+use App\Http\Controllers\SkillRequestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -71,6 +72,12 @@ Route::middleware('auth')->group(function () {
     // Messages routes
     Route::get('/requests/{request}/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/requests/{skillRequest}/messages', [MessageController::class, 'store'])->name('messages.store');
+    
+    // Skill Exchange Routes
+    Route::post('/skill-requests', [SkillRequestController::class, 'store'])->name('skill-requests.store');
+    Route::post('/skill-requests/{request}/accept', [SkillRequestController::class, 'accept'])->name('skill-requests.accept');
+    Route::post('/skill-requests/{request}/decline', [SkillRequestController::class, 'decline'])->name('skill-requests.decline');
+    Route::post('/skill-requests/{request}/cancel', [SkillRequestController::class, 'cancel'])->name('skill-requests.cancel');
 });
 
 Route::get('/dashboard', function () {

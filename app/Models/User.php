@@ -7,6 +7,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Message;
+use App\Models\SkillRequest;
 
 class User extends Authenticatable
 {
@@ -111,5 +113,21 @@ class User extends Authenticatable
     public function receivedMessages(): HasMany
     {
         return $this->hasMany(Message::class, 'recipient_id');
+    }
+
+    /**
+     * Get the skill requests sent by the user.
+     */
+    public function sentSkillRequests()
+    {
+        return $this->hasMany(SkillRequest::class, 'sender_id');
+    }
+
+    /**
+     * Get the skill requests received by the user.
+     */
+    public function receivedSkillRequests()
+    {
+        return $this->hasMany(SkillRequest::class, 'recipient_id');
     }
 }

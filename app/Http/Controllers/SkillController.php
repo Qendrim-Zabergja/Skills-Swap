@@ -107,7 +107,7 @@ class SkillController extends Controller
                 'location' => $user->location ?? 'Location not specified',
                 'rating' => 5, // Placeholder until we implement ratings
                 'swaps_completed' => $user->skills->count(),
-                'teaching_skills' => $user->skills->where('type', 'teaching')
+                'teaching_skills' => $user->skills->where('type', 'teach')
                     ->map(function($skill) {
                         return [
                             'id' => $skill->id,
@@ -116,7 +116,7 @@ class SkillController extends Controller
                             'category' => $skill->category
                         ];
                     })->values(),
-                'learning_skills' => $user->skills->where('type', 'learning')
+                'learning_skills' => $user->skills->where('type', 'learn')
                     ->map(function($skill) {
                         return [
                             'id' => $skill->id,
@@ -129,8 +129,34 @@ class SkillController extends Controller
             ];
         });
 
+        $authUser = auth()->user()->load('skills');
+
         return Inertia::render('Skills/Browse', [
-            'users' => $users
+            'users' => $users,
+            'auth' => [
+                'user' => [
+                    'id' => $authUser->id,
+                    'name' => $authUser->name,
+                    'teaching_skills' => $authUser->skills->where('type', 'teach')
+                        ->map(function($skill) {
+                            return [
+                                'id' => $skill->id,
+                                'name' => $skill->name,
+                                'description' => $skill->description,
+                                'category' => $skill->category
+                            ];
+                        })->values(),
+                    'learning_skills' => $authUser->skills->where('type', 'learn')
+                        ->map(function($skill) {
+                            return [
+                                'id' => $skill->id,
+                                'name' => $skill->name,
+                                'description' => $skill->description,
+                                'category' => $skill->category
+                            ];
+                        })->values(),
+                ]
+            ]
         ]);
     }
 
