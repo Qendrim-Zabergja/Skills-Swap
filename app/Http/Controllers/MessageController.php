@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -89,6 +90,12 @@ class MessageController extends Controller
                     'is_mine' => $message->user_id === $currentUser->id,
                 ];
             }),
+            'auth' => [
+                'user' => [
+                    'id' => $currentUser->id,
+                    'name' => $currentUser->name,
+                ]
+            ]
         ]);
     }
 
@@ -110,6 +117,9 @@ class MessageController extends Controller
             'content' => $validated['content'],
             'skill_exchange' => $validated['skill_exchange'] ?? null,
         ]);
+
+        // Broadcast the message
+        broadcast(new MessageSent($message))->toOthers();
 
         return back();
     }

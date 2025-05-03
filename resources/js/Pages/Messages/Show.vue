@@ -89,8 +89,9 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { router } from '@inertiajs/vue3';
+import Echo from 'laravel-echo';
 
 const props = defineProps({
     otherUser: Object,
@@ -99,13 +100,15 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    auth: Object,
 });
 
 const newMessage = ref('');
 const messagesContainer = ref(null);
+const localMessages = ref([...props.messages]);
 
 const groupedMessages = computed(() => {
-    return props.messages.map(message => ({
+    return localMessages.value.map(message => ({
         ...message,
         date: new Date(message.date).toLocaleDateString('en-US', {
             weekday: 'long',
@@ -132,13 +135,45 @@ const sendMessage = () => {
     }, {
         preserveScroll: true,
         onSuccess: () => {
+            // Add message to local state immediately
+            localMessages.value.unshift({
+                id: Date.now(), // temporary ID
+                content: message,
+                time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+                date: new Date().toISOString(),
+                is_mine: true,
+            });
             newMessage.value = '';
             nextTick(scrollToBottom);
         },
     });
 };
 
+let echo = null;
+
 onMounted(() => {
     scrollToBottom();
+    
+    // Initialize Echo and listen for messages
+    echo = window.Echo.private(`chat.${props.auth.user.id}`)
+        .listen('MessageSent', (e) => {
+            if (e.message.user_id === props.otherUser.id) {
+                localMessages.value.unshift({
+                    id: e.message.id,
+                    content: e.message.content,
+                    time: e.message.time,
+                    date: e.message.date,
+                    is_mine: false,
+                });
+                scrollToBottom();
+            }
+        });
+});
+
+onUnmounted(() => {
+    // Clean up Echo listener
+    if (echo) {
+        echo.stopListening('MessageSent');
+    }
 });
 </script>

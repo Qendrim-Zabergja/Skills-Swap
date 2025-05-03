@@ -69,10 +69,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
     Route::put('/requests/{skillRequest}', [RequestController::class, 'update'])->name('requests.update');
     
-    // Messages routes
-    Route::get('/requests/{request}/messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::post('/requests/{skillRequest}/messages', [MessageController::class, 'store'])->name('messages.store');
-    
     // Skill Exchange Routes
     Route::post('/skill-requests', [SkillRequestController::class, 'store'])->name('skill-requests.store');
     Route::post('/skill-requests/{request}/accept', [SkillRequestController::class, 'accept'])->name('skill-requests.accept');

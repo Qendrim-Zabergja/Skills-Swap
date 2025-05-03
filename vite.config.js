@@ -17,4 +17,12 @@ export default defineConfig({
             },
         }),
     ],
+    optimizeDeps: {
+        include: ['pusher-js', 'laravel-echo'],
+    },
+    build: {
+        commonjsOptions: {
+            include: ['pusher-js', 'laravel-echo', /node_modules/],
+        },
+    },
 });
