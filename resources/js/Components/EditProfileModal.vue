@@ -12,7 +12,7 @@
         </button>
       </div>
 
-      <form @submit.prevent="saveProfile" class="space-y-6">
+      <form @submit.prevent="validateAndSave" class="space-y-6">
         <!-- Profile Photo -->
         <div class="flex items-center space-x-6">
           <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xl">
@@ -33,7 +33,9 @@
               v-model="form.name" 
               type="text" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              :class="{'border-red-500': errors.name}"
             >
+            <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
           </div>
 
           <div>
@@ -42,7 +44,9 @@
               v-model="form.email" 
               type="email" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              :class="{'border-red-500': errors.email}"
             >
+            <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
           </div>
 
           <div>
@@ -51,7 +55,9 @@
               v-model="form.phone" 
               type="tel" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              :class="{'border-red-500': errors.phone}"
             >
+            <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
           </div>
 
           <div>
@@ -60,7 +66,9 @@
               v-model="form.location" 
               type="text" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              :class="{'border-red-500': errors.location}"
             >
+            <p v-if="errors.location" class="mt-1 text-sm text-red-600">{{ errors.location }}</p>
           </div>
         </div>
 
@@ -91,7 +99,7 @@
               type="text"
               placeholder="Add a skill you can teach..."
               class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-              @keyup.enter="addTeachingSkill"
+              @keyup.enter.prevent="addTeachingSkill"
             >
             <select
               v-model="newTeachingCategory"
@@ -110,6 +118,7 @@
               Add
             </button>
           </div>
+          <p v-if="errors.teachingSkills" class="mt-1 text-sm text-red-600">{{ errors.teachingSkills }}</p>
         </div>
 
         <!-- Skills I Want to Learn -->
@@ -139,7 +148,7 @@
               type="text"
               placeholder="Add a skill you want to learn..."
               class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-              @keyup.enter="addLearningSkill"
+              @keyup.enter.prevent="addLearningSkill"
             >
             <select
               v-model="newLearningCategory"
@@ -158,6 +167,7 @@
               Add
             </button>
           </div>
+          <p v-if="errors.learningSkills" class="mt-1 text-sm text-red-600">{{ errors.learningSkills }}</p>
         </div>
 
         <!-- Form Actions -->
@@ -207,6 +217,7 @@ export default {
         teachingSkills: this.teachingSkills || [],
         learningSkills: this.learningSkills || []
       }),
+      errors: {},
       newTeachingSkill: '',
       newTeachingCategory: '',
       newLearningSkill: '',
@@ -238,6 +249,10 @@ export default {
         });
         this.newTeachingSkill = '';
         this.newTeachingCategory = '';
+        // Clear error if it exists
+        if (this.errors.teachingSkills) {
+          delete this.errors.teachingSkills;
+        }
       }
     },
 
@@ -253,6 +268,10 @@ export default {
         });
         this.newLearningSkill = '';
         this.newLearningCategory = '';
+        // Clear error if it exists
+        if (this.errors.learningSkills) {
+          delete this.errors.learningSkills;
+        }
       }
     },
 
@@ -260,10 +279,67 @@ export default {
       this.form.learningSkills = this.form.learningSkills.filter(s => s.name !== skill.name);
     },
 
+    validateForm() {
+      this.errors = {};
+      let isValid = true;
+
+      // Validate required fields
+      if (!this.form.name) {
+        this.errors.name = 'Field is required';
+        isValid = false;
+      }
+
+      if (!this.form.email) {
+        this.errors.email = 'Field is required';
+        isValid = false;
+      } else if (!this.validateEmail(this.form.email)) {
+        this.errors.email = 'Please enter a valid email address';
+        isValid = false;
+      }
+
+      if (!this.form.phone) {
+        this.errors.phone = 'Field is required';
+        isValid = false;
+      }
+
+      if (!this.form.location) {
+        this.errors.location = 'Field is required';
+        isValid = false;
+      }
+
+      // Check if skills are required
+      if (this.form.teachingSkills.length === 0) {
+        this.errors.teachingSkills = 'Please add at least one skill you can teach';
+        isValid = false;
+      }
+
+      if (this.form.learningSkills.length === 0) {
+        this.errors.learningSkills = 'Please add at least one skill you want to learn';
+        isValid = false;
+      }
+
+      return isValid;
+    },
+
+    validateEmail(email) {
+      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+    },
+
+    validateAndSave() {
+      if (this.validateForm()) {
+        this.saveProfile();
+      }
+    },
+
     saveProfile() {
       this.form.patch(route('profile.update'), {
         onSuccess: () => {
           this.$emit('saved');
+        },
+        onError: (errors) => {
+          // Handle server-side validation errors if they come back
+          this.errors = errors;
         }
       });
     }
