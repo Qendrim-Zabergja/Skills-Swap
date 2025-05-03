@@ -10,6 +10,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class MessageSent implements ShouldBroadcast
 {
@@ -22,15 +23,8 @@ class MessageSent implements ShouldBroadcast
      */
     public function __construct(Message $message)
     {
-        $this->message = [
-            'id' => $message->id,
-            'content' => $message->content,
-            'time' => $message->created_at->format('g:i A'),
-            'date' => $message->created_at->format('M j, Y'),
-            'is_mine' => false,
-            'user_id' => $message->user_id,
-            'recipient_id' => $message->recipient_id
-        ];
+        $this->message = $message;
+        Log::info('MessageSent event constructed', ['message' => $message]);
     }
 
     /**
@@ -40,8 +34,43 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        Log::info('Broadcasting on channel', ['channel' => 'chat.' . $this->message->recipient_id]);
         return [
-            new PrivateChannel('chat.' . $this->message['recipient_id']),
+            new PrivateChannel('chat.' . $this->message->recipient_id),
+        ];
+    }
+
+    /**
+     * Get the broadcast event name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'MessageSent';
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith(): array
+    {
+        Log::info('Broadcasting message data', [
+            'id' => $this->message->id,
+            'content' => $this->message->content,
+            'user_id' => $this->message->user_id,
+            'recipient_id' => $this->message->recipient_id
+        ]);
+
+        return [
+            'message' => [
+                'id' => $this->message->id,
+                'content' => $this->message->content,
+                'time' => $this->message->created_at->format('g:i A'),
+                'date' => $this->message->created_at->format('Y-m-d'),
+                'user_id' => $this->message->user_id,
+                'recipient_id' => $this->message->recipient_id
+            ]
         ];
     }
 }

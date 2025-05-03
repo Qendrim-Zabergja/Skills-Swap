@@ -8,6 +8,7 @@ use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\Inertia;
 
@@ -66,7 +67,7 @@ class MessageController extends Controller
                 $query->where('user_id', $user->id)
                     ->where('recipient_id', $currentUser->id);
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
             
         // Mark messages as read
@@ -119,7 +120,22 @@ class MessageController extends Controller
         ]);
 
         // Broadcast the message
-        broadcast(new MessageSent($message))->toOthers();
+        try {
+            Log::info('Broadcasting message to channel chat.' . $user->id, [
+                'message' => $message->toArray(),
+                'sender_id' => $currentUser->id,
+                'recipient_id' => $user->id
+            ]);
+            
+            broadcast(new MessageSent($message))->toOthers();
+            
+            Log::info('Message broadcast completed');
+        } catch (\Exception $e) {
+            Log::error('Broadcasting failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'message' => $message->toArray()
+            ]);
+        }
 
         return back();
     }

@@ -1,6 +1,19 @@
 <template>
-    <AuthenticatedLayout>
-        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-100">
+        <!-- Back button -->
+        <div class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center">
+                <Link :href="route('profile.edit')" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Back to Profile</span>
+                </Link>
+            </div>
+        </div>
+
+        <!-- Chat container -->
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <div class="bg-white rounded-lg shadow">
                 <!-- Header -->
                 <div class="border-b px-6 py-4">
@@ -84,13 +97,12 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </div>
 </template>
 
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import Echo from 'laravel-echo';
 
 const props = defineProps({
@@ -126,25 +138,30 @@ const scrollToBottom = () => {
 };
 
 const sendMessage = () => {
-    const message = newMessage.value.trim();
-    if (!message) return;
+    if (newMessage.value.trim() === '') return;
 
     router.post(route('messages.store', props.otherUser.id), {
-        content: message,
+        content: newMessage.value,
         skill_exchange: props.skillExchange,
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            // Add message to local state immediately
-            localMessages.value.unshift({
-                id: Date.now(), // temporary ID
-                content: message,
-                time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-                date: new Date().toISOString(),
+            // Add the message to local state immediately
+            localMessages.value.push({
+                id: Date.now(), // Temporary ID
+                content: newMessage.value,
+                time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                date: new Date().toISOString().split('T')[0],
                 is_mine: true,
             });
+            
+            // Clear the form
             newMessage.value = '';
-            nextTick(scrollToBottom);
+            
+            // Scroll to bottom after the message is added
+            nextTick(() => {
+                scrollToBottom();
+            });
         },
     });
 };
@@ -156,24 +173,53 @@ onMounted(() => {
     
     // Initialize Echo and listen for messages
     echo = window.Echo.private(`chat.${props.auth.user.id}`)
-        .listen('MessageSent', (e) => {
-            if (e.message.user_id === props.otherUser.id) {
-                localMessages.value.unshift({
-                    id: e.message.id,
-                    content: e.message.content,
-                    time: e.message.time,
-                    date: e.message.date,
+        .listen('MessageSent', (event) => {
+            console.log('Received message event:', event);
+            
+            // Check if message is from the other user we're chatting with
+            if (parseInt(event.message.user_id) === parseInt(props.otherUser.id)) {
+                console.log('Adding message from user:', event.message.user_id);
+                console.log('Message content:', event.message.content);
+                
+                // Add new message at the end
+                localMessages.value.push({
+                    id: event.message.id,
+                    content: event.message.content,
+                    time: event.message.time,
+                    date: event.message.date,
                     is_mine: false,
                 });
-                scrollToBottom();
+                
+                nextTick(() => {
+                    scrollToBottom();
+                });
+            } else {
+                console.log('Message not from current chat partner', {
+                    messageFromId: event.message.user_id,
+                    currentChatPartnerId: props.otherUser.id
+                });
             }
         });
+
+    // Debug channel subscription
+    window.Echo.connector.pusher.connection.bind('state_change', (states) => {
+        console.log('Pusher state changed:', states);
+    });
+
+    echo.on('subscription_succeeded', () => {
+        console.log('Successfully subscribed to chat channel:', `chat.${props.auth.user.id}`);
+    });
+
+    echo.on('subscription_error', (error) => {
+        console.error('Failed to subscribe to chat channel:', error);
+    });
 });
 
 onUnmounted(() => {
     // Clean up Echo listener
     if (echo) {
         echo.stopListening('MessageSent');
+        window.Echo.leave(`chat.${props.auth.user.id}`);
     }
 });
 </script>

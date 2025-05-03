@@ -23,9 +23,36 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
+// Enable Pusher logging
+Pusher.logToConsole = true;
+
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: '8368e85f5faa47ff1b83',
     cluster: 'eu',
-    forceTLS: true
+    forceTLS: true,
+    encrypted: true,
+    enabledTransports: ['ws', 'wss'],
+    host: 'api-eu.pusher.com',
+    auth: {
+        headers: {
+            'X-CSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1],
+        }
+    }
+});
+
+// Debug Pusher connection
+window.Echo.connector.pusher.connection.bind('connected', () => {
+    console.log('Pusher connected');
+});
+
+window.Echo.connector.pusher.connection.bind('error', (error) => {
+    console.error('Pusher error:', error);
+});
+
+window.Echo.connector.pusher.connection.bind('state_change', (states) => {
+    console.log('Connection states:', {
+        previous: states.previous,
+        current: states.current,
+    });
 });
