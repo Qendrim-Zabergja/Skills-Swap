@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('skills', function (Blueprint $table) {
-            $table->enum('type', ['teaching', 'learning'])->default('teaching');
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('location')->nullable()->after('email');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('skills', function (Blueprint $table) {
-            $table->dropColumn('type');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('location');
         });
     }
 };

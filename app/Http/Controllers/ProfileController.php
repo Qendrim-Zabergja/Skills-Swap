@@ -8,29 +8,44 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
+use App\Models\Skill;
+use App\Models\SwapRequest;
+use App\Models\Message;
+use App\Models\SkillRequest;
+use Carbon\Carbon;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's profile page.
      */
     public function edit(Request $request): Response
     {
         $user = $request->user();
-        $user->load('skills');
+        $teachingSkills = $user->skills()->where('type', 'teach')->get();
+        $learningSkills = $user->skills()->where('type', 'learn')->get();
         
-        $incomingRequests = $user->receivedRequests()->with(['sender', 'skill'])->latest()->get();
-        $outgoingRequests = $user->sentRequests()->with(['receiver', 'skill'])->latest()->get();
-        
+        $incomingRequests = SkillRequest::with('sender')
+            ->where('recipient_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $outgoingRequests = SkillRequest::with('recipient')
+            ->where('sender_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('Profile/Edit', [
+            'user' => $user,
+            'teachingSkills' => $teachingSkills,
+            'learningSkills' => $learningSkills,
+            'incomingRequests' => $incomingRequests,
+            'outgoingRequests' => $outgoingRequests,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
-            'user' => $user,
-            'incomingRequests' => $incomingRequests,
-            'outgoingRequests' => $outgoingRequests
         ]);
     }
 
@@ -39,24 +54,54 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Update user info
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'location' => $validated['location'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        if ($request->hasFile('profile_image')) {
-            if ($request->user()->profile_image) {
-                Storage::disk('public')->delete($request->user()->profile_image);
+        $user->save();
+
+        // Handle teaching skills
+        $user->skills()->where('type', 'teach')->delete();
+        if (isset($validated['teachingSkills']) && is_array($validated['teachingSkills'])) {
+            foreach ($validated['teachingSkills'] as $skill) {
+                if (!empty($skill['name']) && !empty($skill['category'])) {
+                    $user->skills()->create([
+                        'name' => $skill['name'],
+                        'category' => $skill['category'],
+                        'type' => 'teach',
+                        'description' => $skill['name'] // Using name as description for now
+                    ]);
+                }
             }
-            
-            $path = $request->file('profile_image')->store('profile-images', 'public');
-            $request->user()->profile_image = $path;
         }
 
-        $request->user()->save();
+        // Handle learning skills
+        $user->skills()->where('type', 'learn')->delete();
+        if (isset($validated['learningSkills']) && is_array($validated['learningSkills'])) {
+            foreach ($validated['learningSkills'] as $skill) {
+                if (!empty($skill['name']) && !empty($skill['category'])) {
+                    $user->skills()->create([
+                        'name' => $skill['name'],
+                        'category' => $skill['category'],
+                        'type' => 'learn',
+                        'description' => $skill['name'] // Using name as description for now
+                    ]);
+                }
+            }
+        }
 
-        return Redirect::route('profile.edit');
+        return back();
     }
 
     /**
@@ -78,5 +123,20 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /**
+     * Update the user's profile photo.
+     */
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'max:1024'],
+        ]);
+
+        $path = $request->file('photo')->store('profile-photos', 'public');
+        $request->user()->update(['profile_photo_path' => $path]);
+
+        return Redirect::route('profile.edit');
     }
 }

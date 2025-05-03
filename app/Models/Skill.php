@@ -10,20 +10,21 @@ class Skill extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'title',
-        'description',
+        'name',
+        'type',
         'category',
-        'type'
+        'user_id'
     ];
 
+    protected $casts = [
+        'type' => 'string'
+    ];
+
+    /**
+     * Get the user that owns the skill.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function requests()
-    {
-        return $this->hasMany(Request::class);
     }
 }
