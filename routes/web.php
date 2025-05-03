@@ -4,9 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SwapRequestController;
 use App\Http\Controllers\SkillController;
-use App\Http\Controllers\RequestController;
 use App\Http\Controllers\BrowseController;
-use App\Http\Controllers\SkillRequestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -28,15 +26,6 @@ Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
 Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
 Route::get('/skills/{skill}', [SkillController::class, 'show'])->name('skills.show');
 
-Route::prefix('api')->group(function () {
-    Route::get('/skills', [SkillController::class, 'getSkills']);
-    Route::get('/featured-skills', [SkillController::class, 'featured']);
-    
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/requests', [RequestController::class, 'store']);
-    });
-});
-
 Route::middleware('auth')->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -55,25 +44,14 @@ Route::middleware('auth')->group(function () {
     // Swap requests routes
     Route::get('/requests', [SwapRequestController::class, 'index'])->name('requests.index');
     Route::post('/requests', [SwapRequestController::class, 'store'])->name('requests.store');
-    Route::post('/requests/{request}/accept', [SwapRequestController::class, 'accept'])->name('requests.accept');
-    Route::post('/requests/{request}/decline', [SwapRequestController::class, 'decline'])->name('requests.decline');
-    Route::post('/requests/{request}/cancel', [SwapRequestController::class, 'cancel'])->name('requests.cancel');
+    Route::post('/requests/{swapRequest}/accept', [SwapRequestController::class, 'accept'])->name('requests.accept');
+    Route::post('/requests/{swapRequest}/decline', [SwapRequestController::class, 'decline'])->name('requests.decline');
+    Route::post('/requests/{swapRequest}/cancel', [SwapRequestController::class, 'cancel'])->name('requests.cancel');
     
     // Messages routes
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{user}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{user}', [MessageController::class, 'store'])->name('messages.store');
-    
-    // Requests routes
-    Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
-    Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
-    Route::put('/requests/{skillRequest}', [RequestController::class, 'update'])->name('requests.update');
-    
-    // Skill Exchange Routes
-    Route::post('/skill-requests', [SkillRequestController::class, 'store'])->name('skill-requests.store');
-    Route::post('/skill-requests/{request}/accept', [SkillRequestController::class, 'accept'])->name('skill-requests.accept');
-    Route::post('/skill-requests/{request}/decline', [SkillRequestController::class, 'decline'])->name('skill-requests.decline');
-    Route::post('/skill-requests/{request}/cancel', [SkillRequestController::class, 'cancel'])->name('skill-requests.cancel');
 });
 
 Route::get('/dashboard', function () {

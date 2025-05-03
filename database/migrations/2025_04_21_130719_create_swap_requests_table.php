@@ -17,7 +17,10 @@ return new class extends Migration
             $table->foreignId('recipient_id')->constrained('users')->onDelete('cascade');
             $table->string('skill_wanted');
             $table->string('skill_offered');
-            $table->enum('status', ['pending', 'accepted', 'declined'])->default('pending');
+            $table->text('message')->nullable();
+            $table->string('availability')->nullable();
+            $table->integer('duration')->nullable();
+            $table->enum('status', ['Pending', 'Accepted', 'Declined', 'Cancelled'])->default('Pending');
             $table->timestamps();
         });
     }

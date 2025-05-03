@@ -17,7 +17,7 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Skill You Want to Learn</label>
-            <select v-model="form.learning_skill" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            <select v-model="form.skill_wanted" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
               <option value="">Select a skill you want to learn</option>
               <option v-for="skill in recipient.teaching_skills" :key="skill.id" :value="skill.name">
                 {{ skill.name }}
@@ -27,7 +27,7 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Skill You Can Teach</label>
-            <select v-model="form.teaching_skill" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            <select v-model="form.skill_offered" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
               <option value="">Select a skill you can teach</option>
               <option v-for="skill in user.teaching_skills" :key="skill.id" :value="skill.name">
                 {{ skill.name }}
@@ -123,12 +123,12 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const form = useForm({
-  learning_skill: '',
-  teaching_skill: '',
+  recipient_id: '',
+  skill_wanted: '',
+  skill_offered: '',
   message: '',
   availability: '',
-  duration: '',
-  recipient_id: ''
+  duration: ''
 });
 
 watch(() => props.recipient, (newRecipient) => {
@@ -138,8 +138,8 @@ watch(() => props.recipient, (newRecipient) => {
 }, { immediate: true });
 
 const isFormValid = computed(() => {
-  return form.learning_skill && 
-         form.teaching_skill && 
+  return form.skill_wanted && 
+         form.skill_offered && 
          form.message && 
          form.availability && 
          form.duration;
@@ -151,20 +151,24 @@ const getInitials = (name) => {
 };
 
 const submitRequest = () => {
-  console.log('Submitting request:', {
-    learning_skill: form.learning_skill,
-    teaching_skill: form.teaching_skill,
+  const requestData = {
+    recipient_id: form.recipient_id,
+    skill_wanted: form.skill_wanted,
+    skill_offered: form.skill_offered,
     message: form.message,
     availability: form.availability,
-    duration: form.duration,
-    recipient_id: form.recipient_id
-  });
+    duration: form.duration
+  };
   
-  form.post(route('skill-requests.store'), {
+  console.log('Submitting request:', requestData);
+  
+  form.post(route('requests.store'), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       emit('close');
+      // Reload the page to show the new request
+      window.location.reload();
     },
     onError: (errors) => {
       console.error('Form submission errors:', errors);

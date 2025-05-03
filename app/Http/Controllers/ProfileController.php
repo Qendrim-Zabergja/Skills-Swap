@@ -28,13 +28,15 @@ class ProfileController extends Controller
         $teachingSkills = $user->skills()->where('type', 'teach')->get();
         $learningSkills = $user->skills()->where('type', 'learn')->get();
         
-        $incomingRequests = SkillRequest::with('sender')
+        $incomingRequests = SwapRequest::with('user')
             ->where('recipient_id', $user->id)
+            ->whereIn('status', ['Pending', 'Accepted'])
             ->orderBy('created_at', 'desc')
             ->get();
             
-        $outgoingRequests = SkillRequest::with('recipient')
-            ->where('sender_id', $user->id)
+        $outgoingRequests = SwapRequest::with('recipient')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['Pending', 'Accepted', 'Declined', 'Cancelled'])
             ->orderBy('created_at', 'desc')
             ->get();
 

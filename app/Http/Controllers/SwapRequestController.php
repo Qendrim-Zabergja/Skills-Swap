@@ -35,25 +35,25 @@ class SwapRequestController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'recipient_id' => ['required', 'exists:users,id'],
             'skill_wanted' => ['required', 'string'],
             'skill_offered' => ['required', 'string'],
+            'message' => ['nullable', 'string'],
+            'availability' => ['nullable', 'string'],
+            'duration' => ['nullable', 'integer']
         ]);
 
-        $user = Auth::user();
-        
-        // Check if there's already a pending request
-        $existingRequest = SwapRequest::where('user_id', $user->id)
-            ->where('recipient_id', $validated['recipient_id'])
-            ->where('status', 'pending')
-            ->first();
-            
-        if ($existingRequest) {
-            return back()->with('error', 'You already have a pending request with this user.');
-        }
-
-        $user->sentRequests()->create($validated);
+        $swapRequest = SwapRequest::create([
+            'user_id' => auth()->id(),
+            'recipient_id' => $request->recipient_id,
+            'skill_wanted' => $request->skill_wanted,
+            'skill_offered' => $request->skill_offered,
+            'message' => $request->message,
+            'availability' => $request->availability,
+            'duration' => $request->duration,
+            'status' => 'Pending'
+        ]);
 
         return back()->with('success', 'Request sent successfully.');
     }
@@ -61,13 +61,15 @@ class SwapRequestController extends Controller
     /**
      * Accept a swap request.
      */
-    public function accept(SwapRequest $request): RedirectResponse
+    public function accept(SwapRequest $swapRequest): RedirectResponse
     {
-        if ($request->recipient_id !== Auth::id()) {
+        if ($swapRequest->recipient_id !== Auth::id()) {
             abort(403);
         }
 
-        $request->update(['status' => 'accepted']);
+        $swapRequest->update([
+            'status' => 'Accepted'
+        ]);
 
         return back()->with('success', 'Request accepted successfully.');
     }
@@ -75,13 +77,15 @@ class SwapRequestController extends Controller
     /**
      * Decline a swap request.
      */
-    public function decline(SwapRequest $request): RedirectResponse
+    public function decline(SwapRequest $swapRequest): RedirectResponse
     {
-        if ($request->recipient_id !== Auth::id()) {
+        if ($swapRequest->recipient_id !== Auth::id()) {
             abort(403);
         }
 
-        $request->update(['status' => 'declined']);
+        $swapRequest->update([
+            'status' => 'Declined'
+        ]);
 
         return back()->with('success', 'Request declined successfully.');
     }
@@ -89,14 +93,16 @@ class SwapRequestController extends Controller
     /**
      * Cancel a swap request.
      */
-    public function cancel(SwapRequest $request): RedirectResponse
+    public function cancel(SwapRequest $swapRequest): RedirectResponse
     {
-        if ($request->user_id !== Auth::id()) {
+        if ($swapRequest->user_id !== auth()->id()) {
             abort(403);
         }
 
-        $request->update(['status' => 'cancelled']);
+        $swapRequest->update([
+            'status' => 'Cancelled'
+        ]);
 
-        return back()->with('success', 'Request cancelled successfully.');
+        return back();
     }
 }

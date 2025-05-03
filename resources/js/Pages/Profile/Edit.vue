@@ -94,36 +94,48 @@
             <div v-for="request in incomingRequests" :key="request.id" class="flex items-center justify-between p-4 bg-white border rounded-lg">
               <div class="flex items-center space-x-4">
                 <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                  {{ getInitials(request.sender.name) }}
+                  {{ getInitials(request.user.name) }}
                 </div>
                 <div>
-                  <h4 class="text-sm font-medium">{{ request.sender.name }}</h4>
+                  <h4 class="text-sm font-medium">{{ request.user.name }}</h4>
                   <div class="text-sm text-gray-500">
-                    <span>Wants to learn: {{ request.learning_skill }}</span>
+                    <span>Wants to learn: {{ request.skill_wanted }}</span>
                     <br>
-                    <span>Offers to teach: {{ request.teaching_skill }}</span>
+                    <span>Offers to teach: {{ request.skill_offered }}</span>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1">
+                    Received {{ formatDate(request.created_at) }}
                   </div>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
                 <Link
-                  :href="route('messages.show', request.sender.id)"
+                  :href="route('messages.show', request.user.id)"
                   class="px-3 py-1 text-sm text-gray-600 hover:text-gray-700"
                 >
                   Message
                 </Link>
-                <button 
-                  @click="acceptRequest(request.id)"
-                  class="px-3 py-1 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-800"
-                >
-                  Accept
-                </button>
-                <button 
-                  @click="declineRequest(request.id)"
-                  class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
-                >
-                  Decline
-                </button>
+                <div v-if="request.status === 'Pending'" class="flex space-x-2">
+                  <button 
+                    @click="acceptRequest(request.id)"
+                    class="px-3 py-1 text-sm text-green-600 hover:text-green-700"
+                  >
+                    Accept
+                  </button>
+                  <button 
+                    @click="declineRequest(request.id)"
+                    class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                  >
+                    Decline
+                  </button>
+                </div>
+                <div v-else class="text-sm font-medium" :class="{
+                  'text-green-600': request.status === 'Accepted',
+                  'text-red-600': request.status === 'Declined',
+                  'text-gray-600': request.status === 'Cancelled'
+                }">
+                  {{ request.status }}
+                </div>
               </div>
             </div>
           </div>
@@ -139,9 +151,9 @@
                 <div>
                   <h4 class="text-sm font-medium">{{ request.recipient.name }}</h4>
                   <div class="text-sm text-gray-500">
-                    <span>You want to learn: {{ request.learning_skill }}</span>
+                    <span>You want to learn: {{ request.skill_wanted }}</span>
                     <br>
-                    <span>You offer to teach: {{ request.teaching_skill }}</span>
+                    <span>You offer to teach: {{ request.skill_offered }}</span>
                   </div>
                   <div class="text-xs text-gray-400 mt-1">
                     Sent {{ formatDate(request.created_at) }}
@@ -156,19 +168,19 @@
                   Message
                 </Link>
                 <button 
-                  v-if="request.status === 'pending'"
+                  v-if="request.status === 'Pending'"
                   @click="cancelRequest(request.id)"
                   class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
                 >
                   Cancel
                 </button>
-                <span v-else class="text-sm" :class="{
-                  'text-green-600': request.status === 'accepted',
-                  'text-red-600': request.status === 'declined',
-                  'text-gray-600': request.status === 'cancelled'
+                <div v-else class="text-sm font-medium" :class="{
+                  'text-green-600': request.status === 'Accepted',
+                  'text-red-600': request.status === 'Declined',
+                  'text-gray-600': request.status === 'Cancelled'
                 }">
-                  {{ request.status.charAt(0).toUpperCase() + request.status.slice(1) }}
-                </span>
+                  {{ request.status }}
+                </div>
               </div>
             </div>
           </div>
@@ -361,8 +373,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Navbar from '@/Components/Navbar.vue';
 
@@ -401,6 +413,9 @@ const categories = [
   'Education'
 ];
 
+const incomingRequests = ref(props.incomingRequests || []);
+const outgoingRequests = ref(props.outgoingRequests || []);
+
 const getInitials = (name) => {
   if (!name) return '';
   return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -437,15 +452,30 @@ const removeLearningSkill = (skill) => {
 };
 
 const acceptRequest = (requestId) => {
-  router.post(route('skill-requests.accept', requestId));
+  router.post(route('requests.accept', { swapRequest: requestId }), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      incomingRequests.value = incomingRequests.value.filter(r => r.id !== requestId);
+    }
+  });
 };
 
 const declineRequest = (requestId) => {
-  router.post(route('skill-requests.decline', requestId));
+  router.post(route('requests.decline', { swapRequest: requestId }), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      incomingRequests.value = incomingRequests.value.filter(r => r.id !== requestId);
+    }
+  });
 };
 
 const cancelRequest = (requestId) => {
-  router.post(route('skill-requests.cancel', requestId));
+  router.post(route('requests.cancel', { swapRequest: requestId }), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      outgoingRequests.value = outgoingRequests.value.filter(r => r.id !== requestId);
+    }
+  });
 };
 
 const saveProfile = () => {
@@ -464,4 +494,12 @@ const formatDate = (date) => {
     day: 'numeric',
   });
 };
+
+watch(() => props.incomingRequests, (newRequests) => {
+  incomingRequests.value = newRequests;
+}, { deep: true });
+
+watch(() => props.outgoingRequests, (newRequests) => {
+  outgoingRequests.value = newRequests;
+}, { deep: true });
 </script>

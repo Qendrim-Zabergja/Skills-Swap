@@ -10,20 +10,37 @@ class SwapRequest extends Model
 {
     use HasFactory;
 
+    protected $table = 'swap_requests';
+
     protected $fillable = [
         'user_id',
         'recipient_id',
         'skill_wanted',
         'skill_offered',
-        'status',
+        'message',
+        'availability',
+        'duration',
+        'status'
     ];
+
+    protected $attributes = [
+        'status' => 'Pending'
+    ];
+
+    /**
+     * Get the route key name for Laravel's implicit model binding.
+     */
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
 
     /**
      * Get the user who sent the request.
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
     /**
