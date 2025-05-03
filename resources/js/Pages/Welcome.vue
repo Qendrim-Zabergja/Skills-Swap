@@ -23,11 +23,6 @@
                 <button @click="searchSkills" class="bg-black text-white px-4 py-2 rounded">
                     Find Skills
                 </button>
-                
-            </div>
-            <div class="flex justify-center items-center gap-4 mb-6">
-                <Link :href="route('register')" class="bg-black text-white px-4 py-2 rounded">Start Swapping!</Link>
-
             </div>
 
             <!-- Featured Skills Section -->
