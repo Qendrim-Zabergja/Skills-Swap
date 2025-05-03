@@ -97,11 +97,11 @@
                   {{ getInitials(request.user.name) }}
                 </div>
                 <div>
-                  <h4 class="text-sm font-medium">{{ request.user.name }}</h4>
+                  <div class="text-sm font-medium text-gray-900">{{ request.user.name }}</div>
                   <div class="text-sm text-gray-500">
-                    <span>Wants to learn: {{ request.skill_wanted }}</span>
-                    <br>
-                    <span>Offers to teach: {{ request.skill_offered }}</span>
+                    Wants to learn: {{ request.skill_wanted }}
+                    <br />
+                    Offers to teach: {{ request.skill_offered }}
                   </div>
                   <div class="text-xs text-gray-400 mt-1">
                     Received {{ formatDate(request.created_at) }}
@@ -109,33 +109,37 @@
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <Link
-                  :href="route('messages.show', request.user.id)"
-                  class="px-3 py-1 text-sm text-gray-600 hover:text-gray-700"
-                >
-                  Message
-                </Link>
-                <div v-if="request.status === 'Pending'" class="flex space-x-2">
-                  <button 
+                <template v-if="request.status === 'Pending'">
+                  <button
                     @click="acceptRequest(request.id)"
-                    class="px-3 py-1 text-sm text-green-600 hover:text-green-700"
+                    class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
                   >
                     Accept
                   </button>
-                  <button 
+                  <button
                     @click="declineRequest(request.id)"
-                    class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                    class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200"
                   >
                     Decline
                   </button>
-                </div>
-                <div v-else class="text-sm font-medium" :class="{
-                  'text-green-600': request.status === 'Accepted',
-                  'text-red-600': request.status === 'Declined',
-                  'text-gray-600': request.status === 'Cancelled'
-                }">
-                  {{ request.status }}
-                </div>
+                </template>
+                <template v-else-if="request.status === 'Accepted'">
+                  <Link
+                    :href="route('messages.show', request.user.id)"
+                    class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+                  >
+                    Message
+                  </Link>
+                  <div class="text-sm text-green-600">Accepted</div>
+                </template>
+                <template v-else>
+                  <div class="text-sm" :class="{
+                    'text-red-600': request.status === 'Declined',
+                    'text-gray-600': request.status === 'Cancelled'
+                  }">
+                    {{ request.status }}
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -143,44 +147,46 @@
           <!-- Outgoing Requests -->
           <h3 class="font-medium text-lg mt-8 mb-4">Outgoing Requests</h3>
           <div class="space-y-4">
-            <div v-for="request in outgoingRequests" :key="request.id" class="flex items-center justify-between p-4 bg-white border rounded-lg">
+            <div v-for="request in outgoingRequests" :key="request.id" class="group relative p-4 bg-white border rounded-lg">
+              <button 
+                v-if="request.status === 'Pending'"
+                @click="cancelRequest(request.id)" 
+                class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-700 bg-gray-100 rounded-full shadow-sm z-50 hover:bg-gray-200"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div class="flex items-center space-x-4">
                 <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                   {{ getInitials(request.recipient.name) }}
                 </div>
                 <div>
-                  <h4 class="text-sm font-medium">{{ request.recipient.name }}</h4>
+                  <div class="text-sm font-medium text-gray-900">{{ request.recipient.name }}</div>
                   <div class="text-sm text-gray-500">
-                    <span>You want to learn: {{ request.skill_wanted }}</span>
-                    <br>
-                    <span>You offer to teach: {{ request.skill_offered }}</span>
+                    You want to learn: {{ request.skill_wanted }}
+                    <br />
+                    You offer to teach: {{ request.skill_offered }}
                   </div>
                   <div class="text-xs text-gray-400 mt-1">
                     Sent {{ formatDate(request.created_at) }}
                   </div>
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
+              <div class="mt-2 text-sm" :class="{
+                'text-yellow-600': request.status === 'Pending',
+                'text-green-600': request.status === 'Accepted',
+                'text-red-600': request.status === 'Declined',
+                'text-gray-600': request.status === 'Cancelled'
+              }">
+                {{ request.status }}
                 <Link
+                  v-if="request.status === 'Accepted'"
                   :href="route('messages.show', request.recipient.id)"
-                  class="px-3 py-1 text-sm text-gray-600 hover:text-gray-700"
+                  class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
                 >
                   Message
                 </Link>
-                <button 
-                  v-if="request.status === 'Pending'"
-                  @click="cancelRequest(request.id)"
-                  class="px-3 py-1 text-sm text-red-600 hover:text-red-700"
-                >
-                  Cancel
-                </button>
-                <div v-else class="text-sm font-medium" :class="{
-                  'text-green-600': request.status === 'Accepted',
-                  'text-red-600': request.status === 'Declined',
-                  'text-gray-600': request.status === 'Cancelled'
-                }">
-                  {{ request.status }}
-                </div>
               </div>
             </div>
           </div>
