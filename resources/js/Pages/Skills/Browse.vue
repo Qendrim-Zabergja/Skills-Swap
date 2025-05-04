@@ -8,12 +8,12 @@
 
             <div class="flex gap-6">
                 <!-- Filters Sidebar -->
-                <div class="w-1/4 bg-white rounded-lg border p-6">
-                    <h2 class="text-lg font-semibold mb-6">Filters</h2>
+                <div class="w-1/4 bg-white rounded-lg border p-4 h-fit sticky top-4">
+                    <h2 class="text-lg font-semibold mb-4">Filters</h2>
 
                     <!-- Skill Categories -->
-                    <div class="mb-6">
-                        <h3 class="font-medium mb-3">Skill Categories</h3>
+                    <div class="mb-4">
+                        <h3 class="font-medium mb-2">Skill Categories</h3>
                         <div class="space-y-2">
                             <label v-for="category in categories" :key="category" class="flex items-center">
                                 <input 
@@ -28,8 +28,8 @@
                     </div>
 
                     <!-- Rating Filter -->
-                    <div class="mb-6">
-                        <h3 class="font-medium mb-3">Rating</h3>
+                    <div class="mb-4">
+                        <h3 class="font-medium mb-2">Rating</h3>
                         <div class="space-y-2">
                             <label v-for="rating in [4, 3, 2, 1]" :key="rating" class="flex items-center">
                                 <input 
@@ -48,8 +48,8 @@
                     </div>
 
                     <!-- Exchange Preferences -->
-                    <div class="mb-6">
-                        <h3 class="font-medium mb-3">Exchange Preferences</h3>
+                    <div class="mb-4">
+                        <h3 class="font-medium mb-2">Exchange Preferences</h3>
                         <div class="space-y-2">
                             <label class="flex items-center">
                                 <input 
