@@ -223,42 +223,38 @@ export default defineComponent({
         searchSkills() {
             // Navigate to browse skills page with search query
             if (this.searchQuery.trim()) {
-                const query = this.searchQuery.trim();
+                const query = this.searchQuery.trim().toLowerCase();
                 
+                // Map of keywords to categories
+                const categoryKeywords = {
+                    'Development': ['development', 'coding', 'programming', 'web'],
+                    'Design': ['design', 'graphic', 'ui', 'ux'],
+                    'Music': ['music', 'guitar', 'piano', 'singing'],
+                    'Language': ['language', 'english', 'spanish', 'german'],
+                    'Business': ['business', 'marketing', 'finance'],
+                    'Lifestyle': ['fitness', 'yoga', 'cooking'],
+                    'Photography': ['photography', 'photo', 'camera'],
+                    'Education': ['education', 'teaching', 'tutoring']
+                };
+
+                // Detect category from search term
+                let detectedCategory = null;
+                for (const [category, keywords] of Object.entries(categoryKeywords)) {
+                    if (keywords.some(keyword => query.includes(keyword))) {
+                        detectedCategory = category;
+                        break;
+                    }
+                }
+
+                // Navigate with or without category
                 this.$inertia.get(route('skills.browse'), {
                     search: query,
-                    categories: [] // Also set the categories array for the filter
+                    ...(detectedCategory && { category: detectedCategory })
                 }, {
                     preserveState: true,
                     preserveScroll: true
                 });
             }
-        },
-
-        detectCategory(query) {
-            // List of predefined categories to match against
-            const categoryKeywords = {
-                'Development': ['php', 'javascript', 'python', 'web', 'react', 'vue', 'laravel', 'node', 'coding', 'programming'],
-                'Design': ['design', 'graphic', 'ui', 'ux', 'logo', 'branding', 'illustration', 'photoshop', 'figma'],
-                'Music': ['music', 'guitar', 'piano', 'singing', 'drums', 'bass', 'violin'],
-                'Language': ['language', 'english', 'spanish', 'german', 'french', 'italian', 'chinese', 'japanese'],
-                'Business': ['business', 'marketing', 'seo', 'finance', 'accounting', 'management'],
-                'Lifestyle': ['fitness', 'yoga', 'meditation', 'cooking', 'baking', 'nutrition'],
-                'Photography': ['photography', 'photo', 'camera', 'lightroom', 'portraits'],
-                'Education': ['math', 'science', 'history', 'teaching', 'tutoring']
-            };
-
-            // Convert query to lowercase for case-insensitive matching
-            query = query.toLowerCase();
-            
-            // Check if query contains any category keywords
-            for (const [category, keywords] of Object.entries(categoryKeywords)) {
-                if (keywords.some(keyword => query.includes(keyword))) {
-                    return category;
-                }
-            }
-            
-            return null; // Return null if no category matches
         },
     }
 });

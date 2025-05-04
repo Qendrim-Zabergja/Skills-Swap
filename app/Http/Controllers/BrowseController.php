@@ -15,17 +15,7 @@ class BrowseController extends Controller
             $query->select('id', 'user_id', 'name', 'description', 'type', 'category');
         }]);
 
-        // Apply search filter
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->whereHas('skills', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply category filter
+        // Apply category filter first (if present)
         if ($request->has('category') && $request->category) {
             $category = $request->category;
             $query->whereHas('skills', function ($q) use ($category) {
@@ -35,6 +25,17 @@ class BrowseController extends Controller
             $categories = is_array($request->categories) ? $request->categories : [$request->categories];
             $query->whereHas('skills', function ($q) use ($categories) {
                 $q->whereIn('category', $categories);
+            });
+        }
+
+        // Then apply search filter if present
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('skills', function ($q) use ($search) {
+                $q->where(function ($subquery) use ($search) {
+                    $subquery->where('name', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -49,8 +50,14 @@ class BrowseController extends Controller
                     // Calculate relevance score
                     $nameMatch = str_contains(strtolower($skill->name), $search) ? 2 : 0;
                     $descMatch = str_contains(strtolower($skill->description), $search) ? 1 : 0;
-                    $categoryMatch = str_contains(strtolower($skill->category), $search) ? 1 : 0;
-                    return -($nameMatch + $descMatch + $categoryMatch); // Negative for desc sort
+                    return -($nameMatch + $descMatch); // Negative for desc sort
+                });
+            }
+
+            // If category filter is applied, only show skills from that category
+            if ($request->category) {
+                $skills = $skills->filter(function ($skill) use ($request) {
+                    return $skill->category === $request->category;
                 });
             }
 
