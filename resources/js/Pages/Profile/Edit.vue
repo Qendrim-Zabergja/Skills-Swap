@@ -257,6 +257,16 @@
                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
                 >
               </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Professional Title</label>
+                <input 
+                  v-model="form.title" 
+                  type="text" 
+                  placeholder="e.g. Full Stack Developer, UI Designer, Music Teacher"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                >
+              </div>
             </div>
 
             <!-- Skills I Can Teach -->
@@ -399,6 +409,7 @@ const form = useForm({
   email: props.user?.email || '',
   phone: props.user?.phone || '',
   location: props.user?.location || '',
+  title: props.user?.title || '',
   teachingSkills: props.teachingSkills || [],
   learningSkills: props.learningSkills || []
 });
@@ -488,6 +499,11 @@ const saveProfile = () => {
   form.patch(route('profile.update'), {
     onSuccess: () => {
       showEditModal.value = false;
+      props.user.name = form.name;
+      props.user.email = form.email;
+      props.user.phone = form.phone;
+      props.user.location = form.location;
+      props.user.title = form.title;
     }
   });
 };

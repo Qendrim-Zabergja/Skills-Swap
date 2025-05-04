@@ -65,6 +65,7 @@ class ProfileController extends Controller
             'email' => $validated['email'],
             'phone' => $validated['phone'],
             'location' => $validated['location'],
+            'title' => $validated['title'],
         ]);
 
         if ($user->isDirty('email')) {

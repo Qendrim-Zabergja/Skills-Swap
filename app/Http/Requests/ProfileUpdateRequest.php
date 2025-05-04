@@ -17,15 +17,16 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($this->user()->id)],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($this->user()->id)],
             'phone' => ['nullable', 'string', 'max:20'],
             'location' => ['nullable', 'string', 'max:255'],
+            'title' => ['nullable', 'string', 'max:255'],
             'teachingSkills' => ['nullable', 'array'],
-            'teachingSkills.*.name' => ['required', 'string', 'max:50'],
-            'teachingSkills.*.category' => ['required', 'string', 'max:50'],
+            'teachingSkills.*.name' => ['required', 'string', 'max:255'],
+            'teachingSkills.*.category' => ['required', 'string', 'max:255'],
             'learningSkills' => ['nullable', 'array'],
-            'learningSkills.*.name' => ['required', 'string', 'max:50'],
-            'learningSkills.*.category' => ['required', 'string', 'max:50'],
+            'learningSkills.*.name' => ['required', 'string', 'max:255'],
+            'learningSkills.*.category' => ['required', 'string', 'max:255'],
         ];
     }
 }
