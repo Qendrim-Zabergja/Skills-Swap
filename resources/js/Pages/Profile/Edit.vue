@@ -12,7 +12,7 @@
               {{ getInitials(user.name) }}
             </div>
             <h2 class="text-xl font-medium mb-1">{{ user.name }}</h2>
-            <p class="text-sm text-gray-500 mb-4">{{ user.title || 'Web Developer & Designer' }}</p>
+            <p class="text-sm text-gray-500 mb-4">{{ user.title || 'Professional Title' }}</p>
             <button 
               @click="showEditModal = true"
               class="w-full bg-gray-900 text-white py-2 px-4 rounded text-sm font-medium hover:bg-gray-800"
