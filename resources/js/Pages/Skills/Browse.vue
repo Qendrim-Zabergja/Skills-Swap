@@ -79,12 +79,14 @@
                     </div>
 
                     <div class="flex gap-2">
+                    <div class= "flex justify-center w-full">
                         <button @click="resetFilters" class="px-4 py-2 border rounded hover:bg-gray-50">
                             Reset
                         </button>
-                        <button @click="applyFilters" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+                        </div>
+                       <!-- <button @click="applyFilters" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
                             Apply Filters
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
