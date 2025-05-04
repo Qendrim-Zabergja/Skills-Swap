@@ -268,13 +268,21 @@ export default defineComponent({
     filters: {
       type: Object,
       default: () => ({})
+    },
+    initialSearch: {
+      type: String,
+      default: ''
+    },
+    initialCategory: {
+      type: String,
+      default: ''
     }
   },
 
   data() {
     return {
-      search: '',
-      selectedCategories: [],
+      search: this.initialSearch || '',
+      selectedCategories: this.initialCategory ? [this.initialCategory] : [],
       selectedRating: null,
       lookingForMySkills: false,
       offeringSkillsIWant: false,
@@ -295,7 +303,29 @@ export default defineComponent({
         { value: 4, label: '4 stars' },
         { value: 3, label: '3 stars' },
         { value: 2, label: '2 stars' }
-      ]
+      ],
+      searchTimeout: null
+    }
+  },
+
+  mounted() {
+    // Initialize filters from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    this.search = urlParams.get('search') || this.initialSearch || '';
+    this.selectedCategories = urlParams.get('category') ? [urlParams.get('category')] : 
+                            urlParams.get('categories') ? urlParams.get('categories').split(',') : 
+                            this.initialCategory ? [this.initialCategory] : [];
+  },
+
+  watch: {
+    search(newValue) {
+      // Debounce search to avoid too many requests
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+      }
+      this.searchTimeout = setTimeout(() => {
+        this.applyFilters();
+      }, 300);
     }
   },
 
@@ -308,10 +338,14 @@ export default defineComponent({
         const searchLower = this.search.toLowerCase();
         filtered = filtered.filter(user => {
           const hasMatchingTeaching = user.teaching_skills.some(skill => 
-            skill.name.toLowerCase().includes(searchLower)
+            skill.name.toLowerCase().includes(searchLower) ||
+            (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
+            (skill.category && skill.category.toLowerCase().includes(searchLower))
           );
           const hasMatchingLearning = user.learning_skills.some(skill => 
-            skill.name.toLowerCase().includes(searchLower)
+            skill.name.toLowerCase().includes(searchLower) ||
+            (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
+            (skill.category && skill.category.toLowerCase().includes(searchLower))
           );
           return hasMatchingTeaching || hasMatchingLearning;
         });
