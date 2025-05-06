@@ -104,154 +104,76 @@
                             </svg>
                         </div>
                     </div>
-
-                    <!-- Skills Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div v-for="user in paginatedUsers" :key="user.id" class="bg-white rounded-lg border p-6 flex flex-col h-[400px]">
-                            <!-- User Info -->
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                                    {{ getInitials(user.name) }}
-                                </div>
-                                <div>
-                                    <h3 class="font-medium">{{ user.name }}</h3>
-                                    <p class="text-sm text-gray-500">{{ user.location || 'Location not set' }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Teaching Categories -->
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-700">Skills I Can Teach</h4>
-                                    <div class="flex flex-wrap gap-2 relative">
-                                        <template v-if="getUniqueCategories(user.teaching_skills).length <= 2">
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.teaching_skills)"
-                                                :key="category"
-                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                        </template>
-                                        <template v-else>
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.teaching_skills).slice(0, 2)"
-                                                :key="category"
-                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                            <div class="relative inline-block">
-                                                <button 
-                                                    @click="toggleTeachingCategories(user.id)"
-                                                    class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                >
-                                                    +{{ getUniqueCategories(user.teaching_skills).length - 2 }}
-                                                </button>
-                                                <!-- Dropdown -->
-                                                <div 
-                                                    v-if="expandedTeachingCategories[user.id]"
-                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
-                                                >
-                                                    <span 
-                                                        v-for="category in getUniqueCategories(user.teaching_skills).slice(2)"
-                                                        :key="category"
-                                                        class="block px-4 py-2 text-sm text-gray-700"
-                                                    >
-                                                        {{ category }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <!-- Skills list -->
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    <span 
-                                        v-for="skill in user.teaching_skills" 
-                                        :key="skill.id"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                    >
-                                        {{ skill.name }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Learning Categories -->
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-700">Skills I Want to Learn</h4>
-                                    <div class="flex flex-wrap gap-2 relative">
-                                        <template v-if="getUniqueCategories(user.learning_skills).length <= 2">
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.learning_skills)"
-                                                :key="category"
-                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                        </template>
-                                        <template v-else>
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.learning_skills).slice(0, 2)"
-                                                :key="category"
-                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                            <div class="relative inline-block">
-                                                <button 
-                                                    @click="toggleLearningCategories(user.id)"
-                                                    class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                >
-                                                    +{{ getUniqueCategories(user.learning_skills).length - 2 }}
-                                                </button>
-                                                <!-- Dropdown -->
-                                                <div 
-                                                    v-if="expandedLearningCategories[user.id]"
-                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
-                                                >
-                                                    <span 
-                                                        v-for="category in getUniqueCategories(user.learning_skills).slice(2)"
-                                                        :key="category"
-                                                        class="block px-4 py-2 text-sm text-gray-700"
-                                                    >
-                                                        {{ category }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <!-- Skills list -->
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    <span 
-                                        v-for="skill in user.learning_skills" 
-                                        :key="skill.id"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                    >
-                                        {{ skill.name }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="mt-auto pt-4 border-t flex justify-between items-center">
-                                <div class="text-sm text-gray-500">
-                                    Member since {{ formatDate(user.created_at) }}
-                                </div>
-                                <button 
-                                    @click="openRequestModal(user)"
-                                    class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800"
-                                >
-                                    Request Swap
-                                </button>
-                            </div>
-                        </div>
+<!-- Skills Grid - UPDATED DESIGN -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-for="user in paginatedUsers" :key="user.id" class="bg-white rounded-lg border overflow-hidden">
+        <!-- Top section with category badge and rating -->
+        <div class="flex justify-between items-center p-4">
+            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-medium">
+                {{ user.teaching_skills[0]?.category || 'Design' }}
+            </span>
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                <span class="ml-1 font-medium">{{ (user.rating || 4.9).toFixed(1) }}</span>
+            </div>
+        </div>
+        
+        <!-- Profile and main content -->
+        <div class="px-4 pb-4">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
+                    {{ getInitials(user.name) }}
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-medium text-lg">{{ user.teaching_skills[0]?.name || 'Graphic Design & Brand Identity' }}</h3>
+                    <p class="text-gray-600">{{ user.name }}</p>
+                    <div class="flex items-center text-gray-500 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <span class="text-sm">{{ user.location || 'Location not set' }}</span>
                     </div>
-
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <p class="mt-4 text-gray-800">
+                {{ user.teaching_skills[0]?.description || 'I can teach you how to create stunning logos, brand identities, and marketing materials using Adobe Creative Suite.' }}
+            </p>
+            
+            <!-- Looking to learn section -->
+            <div class="mt-4">
+                <p class="text-sm font-medium mb-2">Looking to learn:</p>
+                <div class="flex flex-wrap gap-2">
+                    <span 
+                        v-for="skill in user.learning_skills" 
+                        :key="skill.id"
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white border border-gray-200"
+                    >
+                        {{ skill.name }}
+                    </span>
+                    <span v-if="user.learning_skills.length === 0" class="text-sm text-gray-500">
+                        No learning skills listed
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="border-t p-4 flex justify-between items-center">
+            <span class="text-sm text-gray-500">{{ user.swaps_completed || 0 }} swaps completed</span>
+            <button 
+                @click="openRequestModal(user)"
+                class="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800"
+            >
+                Request Swap
+            </button>
+        </div>
+    </div>
+</div>
                     <!-- Pagination -->
                     <div class="mt-6 flex justify-center gap-2">
                         <button 
