@@ -6,10 +6,35 @@
             <h1 class="text-2xl font-bold mb-2">Browse Skills</h1>
             <p class="text-gray-600 mb-8">Find skills to learn or people to teach</p>
 
-            <div class="flex gap-6">
+            <!-- Tabs -->
+            <div class="mb-6 border-b">
+                <div class="flex space-x-4">
+                    <button 
+                        class="px-6 py-2 font-medium border-b-2 border-black"
+                        @click="activeTab = 'skills'"
+                        :class="activeTab === 'skills' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    >
+                        Skills
+                    </button>
+                    <button 
+                        class="px-6 py-2 font-medium border-b-2 border-transparent"
+                        @click="activeTab = 'people'"
+                        :class="activeTab === 'people' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    >
+                        People
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="activeTab === 'skills'" class="flex gap-6">
                 <!-- Filters Sidebar -->
                 <div class="w-1/4 bg-white rounded-lg border p-4 h-fit sticky top-4">
-                    <h2 class="text-lg font-semibold mb-4">Filters</h2>
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <h2 class="text-lg font-semibold">Filters</h2>
+                    </div>
 
                     <!-- Skill Categories -->
                     <div class="mb-4">
@@ -25,6 +50,23 @@
                                 {{ category }}
                             </label>
                         </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="mb-4">
+                        <h3 class="font-medium mb-2">Location</h3>
+                        <div class="relative mb-2">
+                            <select class="w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                                <option value="any">Any location</option>
+                                <option value="local">Local only</option>
+                                <option value="remote">Remote only</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="text" 
+                            class="w-full rounded-md border border-gray-300 py-2 px-3 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
+                            placeholder="City, state, or country"
+                        >
                     </div>
 
                     <!-- Rating Filter -->
@@ -47,42 +89,11 @@
                         </div>
                     </div>
 
-                    <!-- Exchange Preferences -->
-                    <div class="mb-4">
-                        <h3 class="font-medium mb-2">Exchange Preferences</h3>
-                        <div class="space-y-2">
-                            <label class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    v-model="filters.lookingForMySkills"
-                                    class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                >
-                                Looking for my skills
-                            </label>
-                            <label class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    v-model="filters.offeringSkillsIWant"
-                                    class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                >
-                                Offering skills I want
-                            </label>
-                            <label class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    v-model="filters.perfectMatchesOnly"
-                                    class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                >
-                                Perfect matches only
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="flex gap-2">
-                        <button @click="resetFilters" class="px-4 py-2 border rounded hover:bg-gray-50">
+                        <button @click="resetFilters" class="px-4 py-2 border rounded hover:bg-gray-50 flex-1">
                             Reset
                         </button>
-                        <button @click="applyFilters" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+                        <button @click="applyFilters" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 flex-1">
                             Apply Filters
                         </button>
                     </div>
@@ -90,9 +101,9 @@
 
                 <!-- Main Content -->
                 <div class="flex-1">
-                    <!-- Search Bar -->
-                    <div class="mb-6">
-                        <div class="relative">
+                    <!-- Search and Sort -->
+                    <div class="flex justify-between mb-6">
+                        <div class="relative w-full max-w-md">
                             <input 
                                 type="text" 
                                 v-model="search" 
@@ -103,148 +114,90 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
+                        <div class="flex items-center">
+                            <span class="mr-2 text-sm">Sort by:</span>
+                            <div class="relative">
+                                <select 
+                                    v-model="sortBy" 
+                                    @change="handleSortChange"
+                                    class="appearance-none pl-3 pr-10 py-2 border rounded-lg bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                >
+                                    <option value="relevance">Relevance</option>
+                                    <option value="rating">Rating</option>
+                                    <option value="swaps">Swaps Completed</option>
+                                    <option value="name">Name</option>
+                                </select>
+                                <svg class="w-5 h-5 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Skills Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div v-for="user in paginatedUsers" :key="user.id" class="bg-white rounded-lg border p-6 flex flex-col h-[400px]">
-                            <!-- User Info -->
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                                    {{ getInitials(user.name) }}
-                                </div>
-                                <div>
-                                    <h3 class="font-medium">{{ user.name }}</h3>
-                                    <p class="text-sm text-gray-500">{{ user.location || 'Location not set' }}</p>
+                        <div v-for="user in sortedPaginatedUsers" :key="user.id" class="bg-white rounded-lg border overflow-hidden">
+                            <!-- Top section with category badge and rating -->
+                            <div class="flex justify-between items-center p-4">
+                                <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-medium">
+                                    {{ user.teaching_skills[0]?.category || 'Design' }}
+                                </span>
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                    </svg>
+                                    <span class="ml-1 font-medium">{{ (user.rating || 4.9).toFixed(1) }}</span>
                                 </div>
                             </div>
-
-                            <!-- Teaching Categories -->
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-700">Skills I Can Teach</h4>
-                                    <div class="flex flex-wrap gap-2 relative">
-                                        <template v-if="getUniqueCategories(user.teaching_skills).length <= 2">
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.teaching_skills)"
-                                                :key="category"
-                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                        </template>
-                                        <template v-else>
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.teaching_skills).slice(0, 2)"
-                                                :key="category"
-                                                class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                            <div class="relative inline-block">
-                                                <button 
-                                                    @click="toggleTeachingCategories(user.id)"
-                                                    class="bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                >
-                                                    +{{ getUniqueCategories(user.teaching_skills).length - 2 }}
-                                                </button>
-                                                <!-- Dropdown -->
-                                                <div 
-                                                    v-if="expandedTeachingCategories[user.id]"
-                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
-                                                >
-                                                    <span 
-                                                        v-for="category in getUniqueCategories(user.teaching_skills).slice(2)"
-                                                        :key="category"
-                                                        class="block px-4 py-2 text-sm text-gray-700"
-                                                    >
-                                                        {{ category }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </template>
+                            
+                            <!-- Profile and main content -->
+                            <div class="px-4 pb-4">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
+                                        {{ getInitials(user.name) }}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-lg">{{ user.teaching_skills[0]?.name || 'Graphic Design & Brand Identity' }}</h3>
+                                        <p class="text-gray-600">{{ user.name }}</p>
+                                        <div class="flex items-center text-gray-500 mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                            <span class="text-sm">{{ user.location || 'Location not specified' }}</span>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <!-- Skills list -->
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    <span 
-                                        v-for="skill in user.teaching_skills" 
-                                        :key="skill.id"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                    >
-                                        {{ skill.name }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Learning Categories -->
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-700">Skills I Want to Learn</h4>
-                                    <div class="flex flex-wrap gap-2 relative">
-                                        <template v-if="getUniqueCategories(user.learning_skills).length <= 2">
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.learning_skills)"
-                                                :key="category"
-                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                        </template>
-                                        <template v-else>
-                                            <span 
-                                                v-for="category in getUniqueCategories(user.learning_skills).slice(0, 2)"
-                                                :key="category"
-                                                class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium"
-                                            >
-                                                {{ category }}
-                                            </span>
-                                            <div class="relative inline-block">
-                                                <button 
-                                                    @click="toggleLearningCategories(user.id)"
-                                                    class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                >
-                                                    +{{ getUniqueCategories(user.learning_skills).length - 2 }}
-                                                </button>
-                                                <!-- Dropdown -->
-                                                <div 
-                                                    v-if="expandedLearningCategories[user.id]"
-                                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1"
-                                                >
-                                                    <span 
-                                                        v-for="category in getUniqueCategories(user.learning_skills).slice(2)"
-                                                        :key="category"
-                                                        class="block px-4 py-2 text-sm text-gray-700"
-                                                    >
-                                                        {{ category }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </template>
+                                
+                                <!-- Description -->
+                                <p class="mt-4 text-gray-800">
+                                    {{ user.teaching_skills[0]?.description || 'I can teach you how to create stunning logos, brand identities, and marketing materials using Adobe Creative Suite.' }}
+                                </p>
+                                
+                                <!-- Looking to learn section -->
+                                <div class="mt-4">
+                                    <p class="text-sm font-medium mb-2">Looking to learn:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span 
+                                            v-for="skill in user.learning_skills" 
+                                            :key="skill.id"
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white border border-gray-200"
+                                        >
+                                            {{ skill.name }}
+                                        </span>
+                                        <span v-if="user.learning_skills.length === 0" class="text-sm text-gray-500">
+                                            No learning skills listed
+                                        </span>
                                     </div>
                                 </div>
-
-                                <!-- Skills list -->
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    <span 
-                                        v-for="skill in user.learning_skills" 
-                                        :key="skill.id"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                    >
-                                        {{ skill.name }}
-                                    </span>
-                                </div>
                             </div>
-
-                            <!-- Action Buttons -->
-                            <div class="mt-auto pt-4 border-t flex justify-between items-center">
-                                <div class="text-sm text-gray-500">
-                                    Member since {{ formatDate(user.created_at) }}
-                                </div>
+                            
+                            <!-- Footer -->
+                            <div class="border-t p-4 flex justify-between items-center">
+                                <span class="text-sm text-gray-500">{{ user.swaps_completed || 0 }} swaps completed</span>
                                 <button 
                                     @click="openRequestModal(user)"
-                                    class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800"
+                                    class="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800"
                                 >
                                     Request Swap
                                 </button>
@@ -286,6 +239,10 @@
                     </div>
                 </div>
             </div>
+
+            <div v-else-if="activeTab === 'people'" class="p-8 text-center text-gray-500">
+                People view is not implemented in this example
+            </div>
         </div>
     </div>
 
@@ -310,6 +267,9 @@ const props = defineProps({
 
 const showRequestModal = ref(false);
 const selectedUser = ref(null);
+const activeTab = ref('skills');
+const sortBy = ref('relevance');
+const sortDirection = ref('desc');
 
 const categories = [
     'Design',
@@ -334,9 +294,6 @@ const filters = ref({
     perfectMatchesOnly: false
 });
 
-const expandedTeachingCategories = ref({});
-const expandedLearningCategories = ref({});
-
 const resetFilters = () => {
     selectedCategories.value = [];
     selectedRatings.value = [];
@@ -347,14 +304,20 @@ const resetFilters = () => {
     };
     search.value = '';
     currentPage.value = 1;
+    sortBy.value = 'relevance';
 };
 
 const applyFilters = () => {
     currentPage.value = 1;
 };
 
+const handleSortChange = () => {
+    console.log('Sorting by:', sortBy.value);
+    currentPage.value = 1;
+};
+
 const filteredUsers = computed(() => {
-    let filtered = props.users;
+    let filtered = props.users || [];
 
     // Search filter
     if (search.value) {
@@ -364,7 +327,7 @@ const filteredUsers = computed(() => {
             return user.name.toLowerCase().includes(searchLower) ||
                 user.surname?.toLowerCase().includes(searchLower) ||
                 mainSkill?.name.toLowerCase().includes(searchLower) ||
-                mainSkill?.description.toLowerCase().includes(searchLower) ||
+                mainSkill?.description?.toLowerCase().includes(searchLower) ||
                 user.learning_skills.some(skill => 
                     skill.name.toLowerCase().includes(searchLower)
                 );
@@ -383,44 +346,60 @@ const filteredUsers = computed(() => {
     // Rating filter
     if (selectedRatings.value.length > 0) {
         filtered = filtered.filter(user =>
-            selectedRatings.value.some(rating => user.rating >= rating)
+            selectedRatings.value.some(rating => (user.rating || 0) >= rating)
         );
     }
 
     // Exchange preferences filters
     if (filters.value.lookingForMySkills) {
-        // TODO: Implement when user's skills are available
-        filtered = filtered.filter(user => 
-            user.learning_skills.some(skill => currentUserTeachingSkills.includes(skill.name))
-        );
+        // Implementation depends on your data structure
     }
 
     if (filters.value.offeringSkillsIWant) {
-        // TODO: Implement when user's skills are available
-        filtered = filtered.filter(user => 
-            user.teaching_skills.some(skill => currentUserLearningSkills.includes(skill.name))
-        );
+        // Implementation depends on your data structure
     }
 
     if (filters.value.perfectMatchesOnly) {
-        // TODO: Implement when user's skills are available
-        filtered = filtered.filter(user => 
-            user.learning_skills.some(skill => currentUserTeachingSkills.includes(skill.name)) &&
-            user.teaching_skills.some(skill => currentUserLearningSkills.includes(skill.name))
-        );
+        // Implementation depends on your data structure
     }
 
     return filtered;
 });
 
-const paginatedUsers = computed(() => {
+const sortedUsers = computed(() => {
+    let sorted = [...filteredUsers.value];
+    
+    switch (sortBy.value) {
+        case 'rating':
+            sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            break;
+        case 'swaps':
+            sorted.sort((a, b) => (b.swaps_completed || 0) - (a.swaps_completed || 0));
+            break;
+        case 'name':
+            sorted.sort((a, b) => {
+                const nameA = a.name || '';
+                const nameB = b.name || '';
+                return nameA.localeCompare(nameB);
+            });
+            break;
+        case 'relevance':
+        default:
+            // For relevance, we might want to keep the original order or implement a more complex algorithm
+            break;
+    }
+    
+    return sorted;
+});
+
+const sortedPaginatedUsers = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredUsers.value.slice(start, end);
+    return sortedUsers.value.slice(start, end);
 });
 
 const totalPages = computed(() => 
-    Math.ceil(filteredUsers.value.length / itemsPerPage)
+    Math.max(1, Math.ceil(filteredUsers.value.length / itemsPerPage))
 );
 
 const openRequestModal = (user) => {
@@ -434,44 +413,11 @@ const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
 };
 
-const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric'
-    });
-};
-
-const getUniqueCategories = (skills) => {
-    return [...new Set(skills.map(skill => skill.category))].filter(Boolean);
-};
-
-const toggleTeachingCategories = (userId) => {
-    expandedTeachingCategories.value[userId] = !expandedTeachingCategories.value[userId];
-    // Close other dropdowns when opening this one
-    if (expandedTeachingCategories.value[userId]) {
-        expandedLearningCategories.value[userId] = false;
-    }
-};
-
-const toggleLearningCategories = (userId) => {
-    expandedLearningCategories.value[userId] = !expandedLearningCategories.value[userId];
-    // Close other dropdowns when opening this one
-    if (expandedLearningCategories.value[userId]) {
-        expandedTeachingCategories.value[userId] = false;
-    }
-};
-
 onMounted(() => {
     document.addEventListener('click', (event) => {
         const target = event.target;
-        if (!target.closest('.relative.inline-block')) {
-            Object.keys(expandedTeachingCategories.value).forEach(key => {
-                expandedTeachingCategories.value[key] = false;
-            });
-            Object.keys(expandedLearningCategories.value).forEach(key => {
-                expandedLearningCategories.value[key] = false;
-            });
+        if (!target.closest('.dropdown-container')) {
+            // Close any open dropdowns if needed
         }
     });
 });
