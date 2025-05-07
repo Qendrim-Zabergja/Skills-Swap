@@ -22,10 +22,6 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
-Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
-Route::get('/skills/{skill}', [SkillController::class, 'show'])->name('skills.show');
-
 Route::middleware('auth')->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -37,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/browse', [BrowseController::class, 'index'])->name('browse.index');
     
     // Skills routes
+    Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
+    Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
+    Route::get('/skills/{skill}', [SkillController::class, 'show'])->name('skills.show');
     Route::post('/skills', [SkillController::class, 'store'])->name('skills.store');
     Route::put('/skills/{skill}', [SkillController::class, 'update'])->name('skills.update');
     Route::delete('/skills/{skill}', [SkillController::class, 'destroy'])->name('skills.destroy');
