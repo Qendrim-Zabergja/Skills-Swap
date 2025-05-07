@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Database\Seeders\SkillSeeder;
-use Database\Seeders\SkillsSeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,14 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create test user if it doesn't exist
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+        }
 
         $this->call([
             SkillSeeder::class,
-            SkillsSeeder::class,
         ]);
     }
 }
