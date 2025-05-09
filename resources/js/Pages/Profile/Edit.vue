@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50" data-v-app>
     <Navbar />
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -216,194 +216,206 @@
 
       <!-- Edit Profile Modal -->
       <Modal :show="showEditModal" @close="showEditModal = false" max-width="2xl">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-medium text-gray-900">
-              Edit Profile
-            </h2>
-            <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-500">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <template #default>
+          <div class="p-6">
+            <h2 class="text-lg font-medium mb-4">Edit Profile</h2>
+
+            <form @submit.prevent="saveProfile" class="space-y-6">
+              <!-- Photo Upload -->
+              <div class="flex items-center space-x-4 mb-6">
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
+                  <img v-if="user.profile_photo_url" :src="user.profile_photo_url" alt="Profile photo" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xl">
+                    {{ getInitials(user.name) }}
+                  </div>
+                </div>
+                <div>
+                  <button 
+                    type="button" 
+                    @click="$refs.modalPhotoInput.click()"
+                    class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Change Photo
+                  </button>
+                  <input
+                    ref="modalPhotoInput"
+                    type="file"
+                    class="hidden"
+                    accept="image/*"
+                    @change="updatePhoto"
+                  />
+                </div>
+              </div>
+
+              <!-- Form Fields -->
+              <div class="space-y-4">
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    id="name"
+                    v-model="form.name"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    id="email"
+                    v-model="form.email"
+                    type="email"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    id="phone"
+                    v-model="form.phone"
+                    type="tel"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+                  <input
+                    id="location"
+                    v-model="form.location"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label for="title" class="block text-sm font-medium text-gray-700">Professional Title</label>
+                  <input
+                    id="title"
+                    v-model="form.title"
+                    type="text"
+                    placeholder="e.g. Full Stack Developer, UI Designer, Music Teacher"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Skills I Can Teach -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Skills I Can Teach</label>
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <span 
+                    v-for="skill in form.teachingSkills" 
+                    :key="skill.name"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
+                  >
+                    {{ skill.name }}
+                    <button 
+                      @click="removeTeachingSkill(skill)" 
+                      type="button" 
+                      class="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input 
+                    v-model="newTeachingSkill"
+                    type="text"
+                    placeholder="Add a skill you can teach..."
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                    @keyup.enter="addTeachingSkill"
+                  >
+                  <select
+                    v-model="newTeachingCategory"
+                    class="w-40 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                  >
+                    <option value="">Category</option>
+                    <option v-for="category in categories" :key="category" :value="category">
+                      {{ category }}
+                    </option>
+                  </select>
+                  <button 
+                    @click="addTeachingSkill"
+                    type="button"
+                    class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <!-- Skills I Want to Learn -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Skills I Want to Learn</label>
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <span 
+                    v-for="skill in form.learningSkills" 
+                    :key="skill.name"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
+                  >
+                    {{ skill.name }}
+                    <button 
+                      @click="removeLearningSkill(skill)" 
+                      type="button" 
+                      class="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input 
+                    v-model="newLearningSkill"
+                    type="text"
+                    placeholder="Add a skill you want to learn..."
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                    @keyup.enter="addLearningSkill"
+                  >
+                  <select
+                    v-model="newLearningCategory"
+                    class="w-40 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                  >
+                    <option value="">Category</option>
+                    <option v-for="category in categories" :key="category" :value="category">
+                      {{ category }}
+                    </option>
+                  </select>
+                  <button 
+                    @click="addLearningSkill"
+                    type="button"
+                    class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <!-- Form Actions -->
+              <div class="flex justify-end space-x-3 pt-6">
+                <button
+                  type="button"
+                  @click="showEditModal = false"
+                  class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
-
-          <form @submit.prevent="saveProfile" class="space-y-6">
-            <!-- Profile Photo -->
-            <div class="flex items-center space-x-6">
-              <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xl">
-                {{ getInitials(form.name) }}
-              </div>
-              <div>
-                <button type="button" class="text-sm text-gray-600 hover:text-gray-900">
-                  Change photo
-                </button>
-              </div>
-            </div>
-
-            <!-- Personal Info -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input 
-                  v-model="form.name" 
-                  type="text" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  v-model="form.email" 
-                  type="email" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input 
-                  v-model="form.phone" 
-                  type="tel" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input 
-                  v-model="form.location" 
-                  type="text" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Professional Title</label>
-                <input 
-                  v-model="form.title" 
-                  type="text" 
-                  placeholder="e.g. Full Stack Developer, UI Designer, Music Teacher"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-              </div>
-            </div>
-
-            <!-- Skills I Can Teach -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Skills I Can Teach</label>
-              <div class="flex flex-wrap gap-2 mb-3">
-                <span 
-                  v-for="skill in form.teachingSkills" 
-                  :key="skill.name"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
-                >
-                  {{ skill.name }}
-                  <button 
-                    @click="removeTeachingSkill(skill)" 
-                    type="button" 
-                    class="text-gray-500 hover:text-gray-700"
-                  >
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              </div>
-              <div class="flex gap-2">
-                <input 
-                  v-model="newTeachingSkill"
-                  type="text"
-                  placeholder="Add a skill you can teach..."
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                  @keyup.enter="addTeachingSkill"
-                >
-                <select
-                  v-model="newTeachingCategory"
-                  class="w-40 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-                  <option value="">Category</option>
-                  <option v-for="category in categories" :key="category" :value="category">
-                    {{ category }}
-                  </option>
-                </select>
-                <button 
-                  @click="addTeachingSkill"
-                  type="button"
-                  class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            <!-- Skills I Want to Learn -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Skills I Want to Learn</label>
-              <div class="flex flex-wrap gap-2 mb-3">
-                <span 
-                  v-for="skill in form.learningSkills" 
-                  :key="skill.name"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
-                >
-                  {{ skill.name }}
-                  <button 
-                    @click="removeLearningSkill(skill)" 
-                    type="button" 
-                    class="text-gray-500 hover:text-gray-700"
-                  >
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              </div>
-              <div class="flex gap-2">
-                <input 
-                  v-model="newLearningSkill"
-                  type="text"
-                  placeholder="Add a skill you want to learn..."
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                  @keyup.enter="addLearningSkill"
-                >
-                <select
-                  v-model="newLearningCategory"
-                  class="w-40 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
-                >
-                  <option value="">Category</option>
-                  <option v-for="category in categories" :key="category" :value="category">
-                    {{ category }}
-                  </option>
-                </select>
-                <button 
-                  @click="addLearningSkill"
-                  type="button"
-                  class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="flex justify-end space-x-3 pt-6">
-              <button
-                type="button"
-                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
-                @click="showEditModal = false"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
+        </template>
       </Modal>
     </div>
   </div>
