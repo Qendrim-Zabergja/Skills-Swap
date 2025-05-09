@@ -158,11 +158,23 @@
 
           <!-- Users Grid -->
           <div class="grid grid-cols-1 gap-6">
+
             <div v-for="user in filteredUsers" :key="user.id" class="bg-white p-6 rounded-lg shadow">
               <div class="flex items-start justify-between">
                 <div class="flex items-center">
-                  <div class="w-12 h-12 rounded-full bg-gray-100 overflow-hidden mr-4 flex items-center justify-center text-gray-500 font-medium">
-                    {{ getInitials(user.name) }}
+                  <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <img 
+                        v-if="user.profile_photo_url" 
+                        :src="user.profile_photo_url"
+                        :alt="user.name" 
+                        class="w-full h-full object-cover" 
+                        @error="handleImageError(user.id)"
+                      />
+                      <span v-else class="text-gray-500 text-sm">
+                        {{ getInitials(user.name) }}
+                      </span>
+                    </div>
                   </div>
                   <div>
                     <h3 class="font-medium">{{ user.name }}</h3>
@@ -250,176 +262,188 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue';
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 
-export default defineComponent({
-  components: {
-    Head,
-    Link
+defineProps({
+  skills: {
+    type: Array,
+    default: () => []
   },
-
-  props: {
-    skills: {
-      type: Array,
-      default: () => []
-    },
-    filters: {
-      type: Object,
-      default: () => ({})
-    },
-    initialSearch: {
-      type: String,
-      default: ''
-    },
-    initialCategory: {
-      type: String,
-      default: ''
-    }
+  filters: {
+    type: Object,
+    default: () => ({})
   },
-
-  data() {
-    return {
-      search: this.initialSearch || '',
-      selectedCategories: this.initialCategory ? [this.initialCategory] : [],
-      selectedRating: null,
-      lookingForMySkills: false,
-      offeringSkillsIWant: false,
-      perfectMatchesOnly: false,
-      currentPage: 1,
-      categories: [
-        'Design',
-        'Development',
-        'Music',
-        'Language',
-        'Business',
-        'Lifestyle',
-        'Photography',
-        'Education'
-      ],
-      ratings: [
-        { value: 5, label: '5 stars' },
-        { value: 4, label: '4 stars' },
-        { value: 3, label: '3 stars' },
-        { value: 2, label: '2 stars' }
-      ],
-      searchTimeout: null
-    }
+  initialSearch: {
+    type: String,
+    default: ''
   },
-
-  mounted() {
-    // Initialize filters from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    this.search = urlParams.get('search') || this.initialSearch || '';
-    this.selectedCategories = urlParams.get('category') ? [urlParams.get('category')] : 
-                            urlParams.get('categories') ? urlParams.get('categories').split(',') : 
-                            this.initialCategory ? [this.initialCategory] : [];
+  initialCategory: {
+    type: String,
+    default: ''
   },
-
-  watch: {
-    search(newValue) {
-      // Debounce search to avoid too many requests
-      if (this.searchTimeout) {
-        clearTimeout(this.searchTimeout);
-      }
-      this.searchTimeout = setTimeout(() => {
-        this.applyFilters();
-      }, 300);
-    }
+  pagination: {
+    type: Object,
+    default: () => ({})
   },
-
-  computed: {
-    filteredUsers() {
-      let filtered = [...this.skills];
-
-      // Apply search filter
-      if (this.search) {
-        const searchLower = this.search.toLowerCase();
-        filtered = filtered.filter(user => {
-          const hasMatchingTeaching = user.teaching_skills.some(skill => 
-            skill.name.toLowerCase().includes(searchLower) ||
-            (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
-            (skill.category && skill.category.toLowerCase().includes(searchLower))
-          );
-          const hasMatchingLearning = user.learning_skills.some(skill => 
-            skill.name.toLowerCase().includes(searchLower) ||
-            (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
-            (skill.category && skill.category.toLowerCase().includes(searchLower))
-          );
-          return hasMatchingTeaching || hasMatchingLearning;
-        });
-      }
-
-      // Apply category filter
-      if (this.selectedCategories.length > 0) {
-        filtered = filtered.filter(user => {
-          const allSkills = [...user.teaching_skills, ...user.learning_skills];
-          return allSkills.some(skill => 
-            this.selectedCategories.includes(skill.category)
-          );
-        });
-      }
-
-      // Apply rating filter
-      if (this.selectedRating) {
-        filtered = filtered.filter(user => 
-          (user.rating || 0) >= this.selectedRating
-        );
-      }
-
-      return filtered;
-    }
-  },
-
-  methods: {
-    getInitials(name) {
-      if (!name) return '';
-      return name.split(' ').map(n => n[0]).join('').toUpperCase();
-    },
-
-    resetFilters() {
-      this.selectedCategories = [];
-      this.selectedRating = null;
-      this.lookingForMySkills = false;
-      this.offeringSkillsIWant = false;
-      this.perfectMatchesOnly = false;
-      this.search = '';
-      this.applyFilters();
-    },
-
-    applyFilters() {
-      this.$inertia.get('/browse', {
-        search: this.search,
-        categories: this.selectedCategories,
-        rating: this.selectedRating,
-        lookingForMySkills: this.lookingForMySkills,
-        offeringSkillsIWant: this.offeringSkillsIWant,
-        perfectMatchesOnly: this.perfectMatchesOnly,
-        page: this.currentPage
-      }, {
-        preserveState: true,
-        preserveScroll: true
-      });
-    },
-
-    requestSwap(userId) {
-      this.$inertia.post(`/requests/${userId}`, {}, {
-        preserveScroll: true
-      });
-    },
-
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.applyFilters();
-      }
-    },
-
-    nextPage() {
-      this.currentPage++;
-      this.applyFilters();
-    }
+  auth: {
+    type: Object,
+    required: true
   }
+});
+
+// State
+const searchQuery = ref('');
+const selectedCategories = ref([]);
+const selectedSkills = ref([]);
+const showFilters = ref(false);
+const imageLoadErrors = ref(new Set());
+const offeringSkillsIWant = ref(false);
+const perfectMatchesOnly = ref(false);
+const currentPage = ref(1);
+const searchTimeout = ref(null);
+
+// Categories
+const categories = [
+  'Design',
+  'Development',
+  'Music',
+  'Language',
+  'Business',
+  'Marketing',
+  'Photography',
+  'Writing'
+];
+
+// Ratings
+const ratings = [
+  { value: 4, label: '4 stars' },
+  { value: 3, label: '3 stars' },
+  { value: 2, label: '2 stars' }
+];
+
+// Methods
+const getInitials = (name) => {
+  if (!name) return '';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+};
+
+const resetFilters = () => {
+  selectedCategories.value = [];
+  selectedRating.value = null;
+  lookingForMySkills.value = false;
+  offeringSkillsIWant.value = false;
+  perfectMatchesOnly.value = false;
+  search.value = '';
+  applyFilters();
+};
+
+const applyFilters = () => {
+  console.log('Applying filters with search:', search.value);
+  window.Inertia.get('/browse', {
+    search: search.value,
+    categories: selectedCategories.value,
+    rating: selectedRating.value,
+    lookingForMySkills: lookingForMySkills.value,
+    offeringSkillsIWant: offeringSkillsIWant.value,
+    perfectMatchesOnly: perfectMatchesOnly.value,
+    page: currentPage.value
+  }, {
+    preserveState: true,
+    preserveScroll: true
+  });
+};
+
+const requestSwap = (userId) => {
+  window.Inertia.post(`/requests/${userId}`, {}, {
+    preserveScroll: true
+  });
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    applyFilters();
+  }
+};
+
+const nextPage = () => {
+  currentPage.value++;
+  applyFilters();
+};
+
+const handleImageError = (userId) => {
+  console.log('Image error for user:', userId);
+  imageLoadErrors.value.add(userId);
+};
+
+// Computed
+const filteredUsers = computed(() => {
+  console.log('FILTERED USERS RUNNING');
+  console.log('Props skills:', props.skills);
+  if (props.skills.length > 0) {
+    console.log('First user photo URL:', props.skills[0].profile_photo_url);
+  }
+  let filtered = [...props.skills];
+  console.log('First user:', filtered[0]);
+
+  // Apply search filter
+  if (search.value) {
+    const searchLower = search.value.toLowerCase();
+    filtered = filtered.filter(user => {
+      const hasMatchingTeaching = user.teaching_skills.some(skill => 
+        skill.name.toLowerCase().includes(searchLower) ||
+        (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
+        (skill.category && skill.category.toLowerCase().includes(searchLower))
+      );
+      const hasMatchingLearning = user.learning_skills.some(skill => 
+        skill.name.toLowerCase().includes(searchLower) ||
+        (skill.description && skill.description.toLowerCase().includes(searchLower)) ||
+        (skill.category && skill.category.toLowerCase().includes(searchLower))
+      );
+      return hasMatchingTeaching || hasMatchingLearning;
+    });
+  }
+
+  // Apply category filter
+  if (selectedCategories.value.length > 0) {
+    filtered = filtered.filter(user => {
+      const allSkills = [...user.teaching_skills, ...user.learning_skills];
+      return allSkills.some(skill => 
+        selectedCategories.value.includes(skill.category)
+      );
+    });
+  }
+
+  // Apply rating filter
+  if (selectedRating.value) {
+    filtered = filtered.filter(user => 
+      (user.rating || 0) >= selectedRating.value
+    );
+  }
+
+  return filtered;
+});
+
+// Watch search changes
+watch(search, (newValue) => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  searchTimeout.value = setTimeout(() => {
+    applyFilters();
+  }, 300);
+});
+
+// Initialize on mount
+onMounted(() => {
+  console.log('Users:', props.skills);
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  search.value = urlParams.get('search') || props.initialSearch || '';
+  selectedCategories.value = urlParams.get('category') ? [urlParams.get('category')] : 
+                          urlParams.get('categories') ? urlParams.get('categories').split(',') : 
+                          props.initialCategory ? [props.initialCategory] : [];
 });
 </script>

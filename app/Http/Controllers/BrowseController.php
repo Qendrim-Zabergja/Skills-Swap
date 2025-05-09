@@ -13,7 +13,7 @@ class BrowseController extends Controller
     {
         $query = User::with(['skills' => function ($query) {
             $query->select('id', 'user_id', 'name', 'description', 'type', 'category');
-        }]);
+        }])->select(['id', 'name', 'email', 'location', 'profile_photo_path', 'created_at']);
 
         // Apply category filter first (if present)
         if ($request->has('category') && $request->category) {
@@ -61,39 +61,76 @@ class BrowseController extends Controller
                 });
             }
 
-            return [
+            $userData = [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
+                'profile_photo_url' => $user->profile_photo_url,
                 'location' => $user->location ?? 'Not specified',
-                'avatar' => $user->avatar,
                 'rating' => $user->rating ?? 4.5,
-                'swaps_completed' => $user->swaps_completed ?? rand(0, 30),
-                'teaching_skills' => $skills->where('type', 'teaching')
-                    ->values()
-                    ->map(function ($skill) {
-                        return [
-                            'id' => $skill->id,
-                            'name' => $skill->name,
-                            'description' => $skill->description,
-                            'category' => $skill->category
-                        ];
-                    }),
-                'learning_skills' => $skills->where('type', 'learning')
-                    ->values()
-                    ->map(function ($skill) {
-                        return [
-                            'id' => $skill->id,
-                            'name' => $skill->name,
-                            'description' => $skill->description,
-                            'category' => $skill->category
-                        ];
-                    })
+                'swaps_completed' => $user->swaps_completed ?? rand(0, 30)
             ];
+            
+            // Get teaching skills
+            $userData['teaching_skills'] = $skills->where('type', 'teaching')
+                ->where('user_id', $user->id)
+                ->map(function($skill) {
+                    return [
+                        'id' => $skill->id,
+                        'name' => $skill->name,
+                        'description' => $skill->description,
+                        'category' => $skill->category
+                    ];
+                })->values()->all();
+            
+            // Get learning skills
+            $userData['learning_skills'] = $skills->where('type', 'learning')
+                ->where('user_id', $user->id)
+                ->map(function($skill) {
+                    return [
+                        'id' => $skill->id,
+                        'name' => $skill->name,
+                        'description' => $skill->description,
+                        'category' => $skill->category
+                    ];
+                })->values()->all();
+                
+            return $userData;
         });
 
+        // Debug user data
+        $items = $users->items();
+        info('Total users found:', ['count' => count($items)]);
+        
+        if (!empty($items)) {
+            info('First user data:', [
+                'raw' => $items[0],
+                'skills' => $items[0]['teaching_skills'] ?? [],
+                'profile' => [
+                    'name' => $items[0]['name'] ?? 'no name',
+                    'photo_url' => $items[0]['profile_photo_url'] ?? 'no url',
+                    'photo_path' => $items[0]['profile_photo_path'] ?? 'no path'
+                ]
+            ]);
+        } else {
+            info('No users found in the database');
+        }
+
+        // Also check the query being executed
+        info('SQL Query:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
+
+        $usersData = $users->items();
+        
+        // Simple debug log
+        info('Debug data', [
+            'users_count' => count($usersData),
+            'first_user' => !empty($usersData) ? $usersData[0] : null
+        ]);
+
         return Inertia::render('BrowseSkills', [
-            'skills' => $users->items(),
+            'skills' => $usersData,
             'filters' => [
                 'search' => $request->search,
                 'categories' => $request->categories,

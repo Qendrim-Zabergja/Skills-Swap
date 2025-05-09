@@ -31,9 +31,15 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            'auth' => [
-                'user' => $request->user(),
-            ],
+            'auth' => fn () => $request->user() ? [
+                'user' => array_merge($request->user()->only(
+                    'id', 'name', 'email', 'profile_photo_path'
+                ), [
+                    'profile_photo_url' => $request->user()->profile_photo_path
+                        ? asset('storage/' . $request->user()->profile_photo_path)
+                        : null
+                ])
+            ] : null,
         ];
     }
 }

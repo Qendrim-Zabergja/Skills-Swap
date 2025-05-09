@@ -41,7 +41,11 @@ class ProfileController extends Controller
             ->get();
 
         return Inertia::render('Profile/Edit', [
-            'user' => $user,
+            'user' => array_merge($user->toArray(), [
+                'profile_photo_url' => $user->profile_photo_path
+                    ? asset('storage/' . $user->profile_photo_path)
+                    : null
+            ]),
             'teachingSkills' => $teachingSkills,
             'learningSkills' => $learningSkills,
             'incomingRequests' => $incomingRequests,

@@ -14,11 +14,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create test user if it doesn't exist
+        // Create test users if they don't exist
         if (!User::where('email', 'test@example.com')->exists()) {
             User::factory()->create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'profile_photo_path' => 'profile-photos/test-user.jpg'
+            ]);
+        }
+        
+        if (!User::where('email', 'jane@example.com')->exists()) {
+            User::factory()->create([
+                'name' => 'Jane Smith',
+                'email' => 'jane@example.com',
+                'profile_photo_path' => 'profile-photos/jane-smith.jpg'
             ]);
         }
 

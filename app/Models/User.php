@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'location',
         'title',
+        'profile_photo_path',
     ];
 
     /**
@@ -49,12 +50,22 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['profile_photo_url'];
+
+    /**
      * Get the user's profile photo URL.
      */
     public function getProfilePhotoUrlAttribute(): string
     {
         if ($this->profile_photo_path) {
-            return asset('storage/' . $this->profile_photo_path);
+            $path = 'storage/' . $this->profile_photo_path;
+            if (file_exists(public_path($path))) {
+                return asset($path);
+            }
         }
 
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
