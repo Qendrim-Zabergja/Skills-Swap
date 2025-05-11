@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('ratings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('request_id')->constrained()->onDelete('cascade');
+            $table->foreignId('request_id')->constrained('skill_requests')->onDelete('cascade');
             $table->foreignId('rater_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('rated_user_id')->constrained('users')->onDelete('cascade');
             $table->integer('score')->between(1, 5);
