@@ -644,12 +644,15 @@ const closeRatingModal = () => {
 };
 
 const submitRating = () => {
-  if (!ratingForm.score || ratingForm.processing) return;
+  if (!ratingForm.score || ratingForm.processing || !selectedRequest.value) return;
   
+  const requestId = selectedRequest.value.id;
+  if (!requestId) return;
+
   ratingForm.processing = true;
   
   router.post(
-    route('ratings.store', { skillRequest: selectedRequest.value.id }),
+    `/requests/${requestId}/rate`,
     {
       score: ratingForm.score,
       comment: ratingForm.comment
@@ -659,9 +662,11 @@ const submitRating = () => {
       onSuccess: () => {
         closeRatingModal();
         // Update the request to show it's been rated
-        const request = incomingRequests.value.find(r => r.id === selectedRequest.value.id);
-        if (request) {
-          request.rated = true;
+        if (props.incomingRequests) {
+          const request = props.incomingRequests.find(r => r.id === requestId);
+          if (request) {
+            request.rated = true;
+          }
         }
       },
       onError: () => {

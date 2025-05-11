@@ -2,9 +2,13 @@
     <div class="flex items-center">
         <template v-for="i in 5" :key="i">
             <svg 
+                @click="handleClick(i)"
+                @mouseover="hoverRating = i"
+                @mouseleave="hoverRating = 0"
                 :class="[
-                    'w-5 h-5',
-                    i <= rating ? 'text-yellow-400' : 'text-gray-300'
+                    'w-5 h-5 cursor-pointer transition-colors',
+                    i <= (hoverRating || modelValue) ? 'text-yellow-400' : 'text-gray-300',
+                    'hover:scale-110'
                 ]"
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 24 24" 
@@ -17,11 +21,20 @@
 </template>
 
 <script setup>
-defineProps({
-    rating: {
+import { ref } from 'vue';
+
+const props = defineProps({
+    modelValue: {
         type: Number,
         required: true,
-        validator: (value) => value >= 0 && value <= 5
+        default: 0
     }
 });
+
+const emit = defineEmits(['update:modelValue']);
+const hoverRating = ref(0);
+
+const handleClick = (value) => {
+    emit('update:modelValue', value);
+};
 </script>

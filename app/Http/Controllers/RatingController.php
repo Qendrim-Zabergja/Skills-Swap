@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rating;
-use App\Models\Request as SkillRequest;
-use Illuminate\Http\Request;
+use App\Models\SwapRequest;
+use Illuminate\Http\Request as HttpRequest;
 use Inertia\Inertia;
 
 class RatingController extends Controller
 {
-    public function store(Request $request, SkillRequest $skillRequest)
+    public function store(HttpRequest $request, SwapRequest $swapRequest)
     {
         $validated = $request->validate([
             'score' => 'required|integer|between:1,5',
@@ -18,41 +18,41 @@ class RatingController extends Controller
 
         // Check if user is part of the request
         $userId = auth()->id();
-        if ($skillRequest->sender_id !== $userId && $skillRequest->receiver_id !== $userId) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($swapRequest->sender_id !== $userId && $swapRequest->receiver_id !== $userId) {
+            return back()->with('error', 'You are not authorized to rate this request.');
         }
 
         // Determine who is being rated
-        $ratedUserId = $skillRequest->sender_id === $userId 
-            ? $skillRequest->receiver_id 
-            : $skillRequest->sender_id;
+        $ratedUserId = $swapRequest->sender_id === $userId 
+            ? $swapRequest->receiver_id 
+            : $swapRequest->sender_id;
 
         // Check for existing rating
         $existingRating = Rating::where([
-            'request_id' => $skillRequest->id,
+            'request_id' => $swapRequest->id,
             'rater_id' => $userId,
         ])->first();
 
         if ($existingRating) {
-            return response()->json(['message' => 'Already rated'], 400);
+            return back()->with('error', 'You have already rated this request.');
         }
 
         $rating = Rating::create([
-            'request_id' => $skillRequest->id,
+            'request_id' => $swapRequest->id,
             'rater_id' => $userId,
             'rated_user_id' => $ratedUserId,
             'score' => $validated['score'],
             'comment' => $validated['comment'],
         ]);
 
-        return response()->json($rating);
+        return back()->with('success', 'Rating submitted successfully!');
     }
 
-    public function checkStatus(SkillRequest $skillRequest)
+    public function checkStatus(SwapRequest $swapRequest)
     {
         $userId = auth()->id();
         $rating = Rating::where([
-            'request_id' => $skillRequest->id,
+            'request_id' => $swapRequest->id,
             'rater_id' => $userId,
         ])->first();
 
@@ -62,7 +62,7 @@ class RatingController extends Controller
         ]);
     }
 
-    public function userRatings(Request $request, $userId)
+    public function userRatings(HttpRequest $request, $userId)
     {
         $ratings = Rating::with(['rater', 'request'])
             ->where('rated_user_id', $userId)

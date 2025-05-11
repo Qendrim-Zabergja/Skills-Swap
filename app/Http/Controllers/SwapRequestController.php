@@ -21,10 +21,14 @@ class SwapRequestController extends Controller
         
         return Inertia::render('Requests/Index', [
             'incomingRequests' => $user->receivedRequests()
-                ->with(['user', 'skill'])
+                ->with(['user', 'skill', 'ratings'])
                 ->latest()
                 ->get()
-                ->map(function ($request) {
+                ->map(function ($request) use ($user) {
+                    $rated = $request->ratings()
+                        ->where('rater_id', $user->id)
+                        ->exists();
+                    
                     return [
                         'id' => $request->id,
                         'user' => [
@@ -37,6 +41,7 @@ class SwapRequestController extends Controller
                         'message' => $request->message,
                         'status' => $request->status,
                         'created_at' => $request->created_at,
+                        'rated' => $rated,
                     ];
                 }),
             'outgoingRequests' => $user->sentRequests()
