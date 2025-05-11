@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SwapRequest;
+use App\Models\Rating;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,7 @@ class SwapRequestController extends Controller
                     ];
                 }),
             'outgoingRequests' => $user->sentRequests()
-                ->with(['recipient', 'skill'])
+                ->with(['recipient', 'skill', 'rating'])
                 ->latest()
                 ->get()
                 ->map(function ($request) {

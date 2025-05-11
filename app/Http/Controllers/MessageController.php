@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
+use App\Models\Request as SkillRequest;
 use App\Models\User;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
@@ -60,16 +61,45 @@ class MessageController extends Controller
         $currentUser = Auth::user();
         
         $messages = Message::where(function ($query) use ($currentUser, $user) {
-                $query->where('user_id', $currentUser->id)
-                    ->where('recipient_id', $user->id);
-            })
-            ->orWhere(function ($query) use ($currentUser, $user) {
-                $query->where('user_id', $user->id)
-                    ->where('recipient_id', $currentUser->id);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
-            
+            $query->where(function ($q) use ($currentUser, $user) {
+                $q->where('user_id', $currentUser->id)
+                  ->where('recipient_id', $user->id);
+            })->orWhere(function ($q) use ($currentUser, $user) {
+                $q->where('user_id', $user->id)
+                  ->where('recipient_id', $currentUser->id);
+            });
+        })
+        ->orderBy('created_at')
+        ->get()
+        ->map(function ($message) use ($currentUser) {
+            return [
+                'id' => $message->id,
+                'content' => $message->content,
+                'time' => $message->created_at->format('g:i A'),
+                'date' => $message->created_at->toDateString(),
+                'is_mine' => $message->user_id === $currentUser->id,
+            ];
+        });
+
+        // Get the skill exchange context if it exists
+        $skillExchange = null;
+        $request = SkillRequest::where(function ($query) use ($currentUser, $user) {
+            $query->where(function ($q) use ($currentUser, $user) {
+                $q->where('sender_id', $currentUser->id)
+                  ->where('receiver_id', $user->id);
+            })->orWhere(function ($q) use ($currentUser, $user) {
+                $q->where('sender_id', $user->id)
+                  ->where('receiver_id', $currentUser->id);
+            });
+        })
+        ->where('status', 'accepted')
+        ->with('skill')
+        ->first();
+
+        if ($request) {
+            $skillExchange = "Skill Exchange: {$request->skill->name}";
+        }
+
         // Mark messages as read
         Message::where('user_id', $user->id)
             ->where('recipient_id', $currentUser->id)
@@ -82,15 +112,9 @@ class MessageController extends Controller
                 'name' => $user->name,
                 'profile_photo_url' => $user->profile_photo_url,
             ],
-            'messages' => $messages->map(function ($message) use ($currentUser) {
-                return [
-                    'id' => $message->id,
-                    'content' => $message->content,
-                    'time' => $message->created_at->format('g:i A'),
-                    'date' => $message->created_at->format('M j, Y'),
-                    'is_mine' => $message->user_id === $currentUser->id,
-                ];
-            }),
+            'messages' => $messages,
+            'skillExchange' => $skillExchange,
+            'requestId' => $request ? $request->id : null,
             'auth' => [
                 'user' => [
                     'id' => $currentUser->id,

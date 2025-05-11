@@ -151,6 +151,13 @@
                   >
                     Message
                   </Link>
+                  <button
+                    v-if="!request.rated"
+                    @click="openRatingModal(request)"
+                    class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 ml-2"
+                  >
+                    Rate
+                  </button>
                   <div class="text-sm text-green-600">Accepted</div>
                 </template>
                 <template v-else>
@@ -419,13 +426,55 @@
       </Modal>
     </div>
   </div>
+  <!-- Rating Modal -->
+  <Modal :show="showRatingModal" @close="closeRatingModal">
+    <div class="p-6">
+      <h2 class="text-lg font-medium mb-4">Rate your experience with {{ selectedRequest?.sender?.name }}</h2>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+        <RatingStars
+          v-model="ratingForm.score"
+          :readonly="false"
+          :show-value="false"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">Comment (Optional)</label>
+        <textarea
+          v-model="ratingForm.comment"
+          rows="3"
+          class="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring focus:ring-gray-900 focus:ring-opacity-50"
+          placeholder="Share your experience..."
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-3">
+        <button
+          @click="closeRatingModal"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button
+          @click="submitRating"
+          :disabled="!ratingForm.score || ratingForm.processing"
+          class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Submit Rating
+        </button>
+      </div>
+    </div>
+  </Modal>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, reactive } from 'vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Navbar from '@/Components/Navbar.vue';
+import RatingStars from '@/Components/RatingStars.vue';
 
 const props = defineProps({
   user: Object,
@@ -436,6 +485,13 @@ const props = defineProps({
 });
 
 const showEditModal = ref(false);
+const showRatingModal = ref(false);
+const selectedRequest = ref(null);
+const ratingForm = reactive({
+  score: 0,
+  comment: '',
+  processing: false
+});
 
 const form = useForm({
   name: props.user?.name || '',
@@ -573,4 +629,45 @@ watch(() => props.incomingRequests, (newRequests) => {
 watch(() => props.outgoingRequests, (newRequests) => {
   outgoingRequests.value = newRequests;
 }, { deep: true });
+
+const openRatingModal = (request) => {
+  selectedRequest.value = request;
+  showRatingModal.value = true;
+};
+
+const closeRatingModal = () => {
+  showRatingModal.value = false;
+  selectedRequest.value = null;
+  ratingForm.score = 0;
+  ratingForm.comment = '';
+  ratingForm.processing = false;
+};
+
+const submitRating = () => {
+  if (!ratingForm.score || ratingForm.processing) return;
+  
+  ratingForm.processing = true;
+  
+  router.post(
+    route('ratings.store', { skillRequest: selectedRequest.value.id }),
+    {
+      score: ratingForm.score,
+      comment: ratingForm.comment
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeRatingModal();
+        // Update the request to show it's been rated
+        const request = incomingRequests.value.find(r => r.id === selectedRequest.value.id);
+        if (request) {
+          request.rated = true;
+        }
+      },
+      onError: () => {
+        ratingForm.processing = false;
+      }
+    }
+  );
+};
 </script>

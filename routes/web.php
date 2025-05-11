@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SwapRequestController;
+use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\BrowseController;
 use Illuminate\Foundation\Application;
@@ -44,6 +45,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/requests', [SwapRequestController::class, 'index'])->name('requests.index');
     Route::post('/requests', [SwapRequestController::class, 'store'])->name('requests.store');
     Route::post('/requests/{swapRequest}/accept', [SwapRequestController::class, 'accept'])->name('requests.accept');
+
+    // Rating routes
+    Route::post('/requests/{skillRequest}/rate', [RatingController::class, 'store'])->name('ratings.store');
+    Route::get('/requests/{skillRequest}/rating-status', [RatingController::class, 'checkStatus'])->name('ratings.check-status');
+    Route::get('/users/{user}/ratings', [RatingController::class, 'userRatings'])->name('ratings.user');
     Route::post('/requests/{swapRequest}/decline', [SwapRequestController::class, 'decline'])->name('requests.decline');
     Route::post('/requests/{swapRequest}/cancel', [SwapRequestController::class, 'cancel'])->name('requests.cancel');
     

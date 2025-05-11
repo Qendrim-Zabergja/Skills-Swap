@@ -142,4 +142,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(SkillRequest::class, 'recipient_id');
     }
+
+    /**
+     * Get ratings given by the user.
+     */
+    public function givenRatings()
+    {
+        return $this->hasMany(Rating::class, 'rater_id');
+    }
+
+    /**
+     * Get ratings received by the user.
+     */
+    public function receivedRatings()
+    {
+        return $this->hasMany(Rating::class, 'rated_user_id');
+    }
+
+    /**
+     * Get the user's average rating.
+     */
+    public function getAverageRatingAttribute()
+    {
+        return $this->receivedRatings()->avg('score') ?? 0;
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SwapRequest extends Model
 {
@@ -49,5 +50,13 @@ class SwapRequest extends Model
     public function recipient(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recipient_id');
+    }
+
+    /**
+     * Get the rating associated with this request.
+     */
+    public function rating(): HasOne
+    {
+        return $this->hasOne(Rating::class, 'request_id');
     }
 }
