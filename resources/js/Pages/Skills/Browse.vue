@@ -116,7 +116,14 @@
                                     {{ getInitials(user.name) }}
                                 </div>
                                 <div>
-                                    <h3 class="font-medium">{{ user.name }}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-medium">{{ user.name }}</h3>
+                                        <!-- Rating Display -->
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-yellow-400 text-sm">★</span>
+                                            <span class="text-sm">{{ user.average_rating || 'N/A' }}</span>
+                                        </div>
+                                    </div>
                                     <p class="text-sm text-gray-500">{{ user.location || 'Location not set' }}</p>
                                 </div>
                             </div>
@@ -300,8 +307,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import SkillExchangeModal from '@/Components/SkillExchangeModal.vue';
 
@@ -338,6 +345,19 @@ const filters = ref({
 
 const expandedTeachingCategories = ref({});
 const expandedLearningCategories = ref({});
+const page = usePage();
+
+// Watch for flash messages
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash && flash.rated_user_id) {
+            // Refresh the page to get updated ratings
+            router.reload({ preserveScroll: true });
+        }
+    },
+    { deep: true }
+);
 
 const resetFilters = () => {
     selectedCategories.value = [];
@@ -385,7 +405,7 @@ const filteredUsers = computed(() => {
     // Rating filter
     if (selectedRatings.value.length > 0) {
         filtered = filtered.filter(user =>
-            selectedRatings.value.some(rating => user.rating >= rating)
+            selectedRatings.value.some(rating => (user.average_rating || 0) >= rating)
         );
     }
 

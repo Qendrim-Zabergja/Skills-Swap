@@ -34,14 +34,14 @@ class RatingController extends Controller
                 ? $swapRequest->recipient_id 
                 : $swapRequest->user_id;
 
-            // Check for existing rating
+            // Check for existing rating for this user (regardless of request)
             $existingRating = Rating::where([
-                'request_id' => $swapRequest->id,
                 'rater_id' => $userId,
+                'rated_user_id' => $ratedUserId,
             ])->first();
 
             if ($existingRating) {
-                return back()->with('error', 'You have already rated this request.');
+                return back()->with('error', 'You have already rated this user.');
             }
 
             $rating = Rating::create([
@@ -56,7 +56,13 @@ class RatingController extends Controller
                 throw new \Exception('Failed to create rating record');
             }
 
-            return back()->with('success', 'Rating submitted successfully!');
+            // Clear any cached rating data
+            cache()->tags(['user-ratings'])->forget('user-' . $ratedUserId . '-ratings');
+            
+            // Redirect back with fresh data and success message
+            return redirect()->back()
+                ->with('success', 'Rating submitted successfully!')
+                ->with('rated_user_id', $ratedUserId);
 
         } catch (\Exception $e) {
             Log::error('Rating creation failed: ' . $e->getMessage(), [

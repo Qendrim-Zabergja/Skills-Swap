@@ -13,7 +13,7 @@ class BrowseController extends Controller
     {
         $query = User::with(['skills' => function ($query) {
             $query->select('id', 'user_id', 'name', 'description', 'type', 'category');
-        }])->select(['id', 'name', 'email', 'location', 'profile_photo_path', 'created_at']);
+        }, 'receivedRatings'])->select(['id', 'name', 'email', 'location', 'profile_photo_path', 'created_at']);
 
         // Apply category filter first (if present)
         if ($request->has('category') && $request->category) {
@@ -66,7 +66,8 @@ class BrowseController extends Controller
                 'name' => $user->name,
                 'profile_photo_url' => $user->profile_photo_url,
                 'location' => $user->location ?? 'Not specified',
-                'rating' => $user->rating ?? 4.5,
+                'average_rating' => $user->average_rating,
+                'total_ratings' => $user->receivedRatings->count(),
                 'swaps_completed' => $user->swaps_completed ?? rand(0, 30)
             ];
             

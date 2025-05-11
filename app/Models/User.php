@@ -54,7 +54,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['profile_photo_url'];
+    protected $appends = ['profile_photo_url', 'average_rating'];
 
     /**
      * Get the user's profile photo URL.
@@ -164,6 +164,7 @@ class User extends Authenticatable
      */
     public function getAverageRatingAttribute()
     {
-        return $this->receivedRatings()->avg('score') ?? 0;
+        $avg = $this->receivedRatings()->avg('score');
+        return $avg ? round($avg, 1) : null;
     }
 }
