@@ -650,29 +650,26 @@ const submitRating = () => {
   if (!requestId) return;
 
   ratingForm.processing = true;
+  ratingForm.error = null; // Clear any previous errors
   
-  router.post(
-    `/requests/${requestId}/rate`,
-    {
-      score: ratingForm.score,
-      comment: ratingForm.comment
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        closeRatingModal();
-        // Update the request to show it's been rated
-        if (props.incomingRequests) {
-          const request = props.incomingRequests.find(r => r.id === requestId);
-          if (request) {
-            request.rated = true;
-          }
+  router.post(`/requests/${requestId}/rate`, {
+    score: ratingForm.score,
+    comment: ratingForm.comment
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      closeRatingModal();
+      // Update the request to show it's been rated
+      if (props.incomingRequests) {
+        const request = props.incomingRequests.find(r => r.id === requestId);
+        if (request) {
+          request.rated = true;
         }
-      },
-      onError: () => {
-        ratingForm.processing = false;
       }
+    },
+    onError: () => {
+      ratingForm.processing = false;
     }
-  );
+  });
 };
 </script>
