@@ -47,7 +47,7 @@
                         </div>
                     </div>
 
-                    <!-- Exchange Preferences -->
+                    <!-- Exchange Preferences
                     <div class="mb-4">
                         <h3 class="font-medium mb-2">Exchange Preferences</h3>
                         <div class="space-y-2">
@@ -76,7 +76,7 @@
                                 Perfect matches only
                             </label>
                         </div>
-                    </div>
+                    </div> -->
 
                     <div class="flex gap-2">
                     <div class= "flex justify-center w-full">
