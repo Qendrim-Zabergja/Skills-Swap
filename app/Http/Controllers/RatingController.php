@@ -20,11 +20,11 @@ class RatingController extends Controller
 
             // Authorization check
             if ($swapRequest->user_id !== $userId && $swapRequest->recipient_id !== $userId) {
-                return response()->json(['error' => 'You are not authorized to rate this request.'], 403);
+                return back()->with('error', 'You are not authorized to rate this request.');
             }
 
             if (!$swapRequest->exists()) {
-                return response()->json(['error' => 'Swap request not found.'], 404);
+                return back()->with('error', 'Swap request not found.');
             }
 
             $ratedUserId = $swapRequest->user_id === $userId
@@ -37,7 +37,7 @@ class RatingController extends Controller
             ])->first();
 
             if ($existingRating) {
-                return response()->json(['error' => 'You have already rated this user.'], 409);
+                return back()->with('error', 'You have already rated this user.');
             }
 
             $rating = Rating::create([
@@ -54,11 +54,7 @@ class RatingController extends Controller
 
             cache()->tags(['user-ratings'])->forget('user-' . $ratedUserId . '-ratings');
 
-            return response()->json([
-                'success'       => true,
-                'message'       => 'Rating submitted successfully!',
-                'rated_user_id' => $ratedUserId,
-            ]);
+            return back()->with('success', 'Rating submitted successfully!');
 
         } catch (\Illuminate\Validation\ValidationException $ve) {
             return response()->json(['errors' => $ve->errors()], 422);
@@ -69,9 +65,7 @@ class RatingController extends Controller
                 'error'      => $e->getMessage(),
             ]);
 
-            return redirect()->back()->withErrors([
-                'rating' => 'Failed to submit rating. Please try again.',
-            ]);
+            return back()->with('error', 'Failed to submit rating. Please try again.');
 
         }
     }

@@ -487,10 +487,9 @@ const props = defineProps({
 const showEditModal = ref(false);
 const showRatingModal = ref(false);
 const selectedRequest = ref(null);
-const ratingForm = reactive({
+const ratingForm = useForm({
   score: 0,
-  comment: '',
-  processing: false
+  comment: ''
 });
 
 const form = useForm({
@@ -641,9 +640,7 @@ const openRatingModal = (request) => {
 const closeRatingModal = () => {
   showRatingModal.value = false;
   selectedRequest.value = null;
-  ratingForm.score = 0;
-  ratingForm.comment = '';
-  ratingForm.processing = false;
+  ratingForm.reset();
 };
 
 const submitRating = () => {
@@ -652,16 +649,9 @@ const submitRating = () => {
   const requestId = selectedRequest.value.id;
   if (!requestId) return;
 
-  ratingForm.processing = true;
-  ratingForm.error = null; // Clear any previous errors
-  
-  router.post(`/requests/${requestId}/rate`, {
-    score: ratingForm.score,
-    comment: ratingForm.comment
-  }, {
+  ratingForm.post(`/requests/${requestId}/rate`, {
     preserveScroll: true,
     onSuccess: () => {
-      closeRatingModal();
       // Update the request to show it's been rated
       if (props.incomingRequests) {
         const request = props.incomingRequests.find(r => r.id === requestId);
@@ -669,9 +659,8 @@ const submitRating = () => {
           request.rated = true;
         }
       }
-    },
-    onError: () => {
-      ratingForm.processing = false;
+      // Close the modal and reset form
+      closeRatingModal();
     }
   });
 };
