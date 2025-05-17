@@ -96,7 +96,7 @@
                 <label class="flex items-center">
                   <input 
                     type="checkbox"
-                    v-model="lookingForMySkills"
+                    v-model="lookingForMySkills" 
                     class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   >
                   <span class="ml-2 text-sm text-gray-600">Looking for my skills</span>
