@@ -121,7 +121,8 @@
                                         <!-- Rating Display -->
                                         <div class="flex items-center gap-1">
                                             <span class="text-yellow-400 text-sm">★</span>
-                                            <span class="text-sm">{{ user.average_rating || 'N/A' }}</span>
+                                            <span class="text-sm">{{ user.rating ? user.rating.toFixed(1) : 'N/A' }}</span>
+                                            <span class="text-xs text-gray-400" v-if="user.rating">({{ user.total_ratings }})</span>
                                         </div>
                                     </div>
                                     <p class="text-sm text-gray-500">{{ user.location || 'Location not set' }}</p>

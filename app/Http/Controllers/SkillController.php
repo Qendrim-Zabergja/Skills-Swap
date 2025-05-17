@@ -94,9 +94,14 @@ class SkillController extends Controller
 
     public function browse()
     {
-        $users = User::with(['skills' => function ($q) {
-            $q->select('id', 'user_id', 'name', 'description', 'type', 'category');
-        }])->get()
+        $users = User::with([
+            'skills' => function ($q) {
+                $q->select('id', 'user_id', 'name', 'description', 'type', 'category');
+            },
+            'receivedRatings' => function ($q) {
+                $q->select('rated_user_id', 'score');
+            }
+        ])->get()
             ->map(function ($user) {
                 return [
                     'id'              => $user->id,
@@ -104,7 +109,8 @@ class SkillController extends Controller
                     'surname'         => $user->surname,
                     'profile_photo'   => $user->profile_photo_url ?? asset('images/default-avatar.png'),
                     'location'        => $user->location ?? 'Location not specified',
-                    'rating'          => 5, // Placeholder until we implement ratings
+                    'rating'          => $user->receivedRatings->avg('score') ?? 0,
+                    'total_ratings'   => $user->receivedRatings->count(),
                     'swaps_completed' => $user->skills->count(),
                     'teaching_skills' => $user->skills->where('type', 'teach')
                         ->map(function ($skill) {
