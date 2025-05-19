@@ -23,6 +23,9 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
     ]);
 })->name('home');
+Route::get('/about', function () {
+    return Inertia::render('About');
+})->name('about');
 
 Route::middleware('auth')->group(function () {
     // Profile routes
