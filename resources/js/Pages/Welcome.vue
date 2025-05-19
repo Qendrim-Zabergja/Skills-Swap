@@ -124,7 +124,7 @@
             <div class="container mx-auto px-4 flex justify-between items-center">
                 <div> 2025 SkillSwap. All rights reserved.</div>
                 <div class="flex space-x-4">
-                    <a href="#" class="hover:underline">About</a>
+                    <Link :href="route('about')" class="hover:underline">About</Link>
                     <a href="#" class="hover:underline">Terms</a>
                     <a href="#" class="hover:underline">Privacy</a>
                     <a href="#" class="hover:underline">Contact</a>
