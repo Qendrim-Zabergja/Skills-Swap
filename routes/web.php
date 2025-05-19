@@ -25,7 +25,20 @@ Route::get('/', function () {
 })->name('home');
 Route::get('/about', function () {
     return Inertia::render('About');
-})->name('about');
+    })->name('about');
+
+Route::get('/terms', function () {
+    return Inertia::render('Terms');
+    })->name('terms');
+
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy');
+    })->name('privacy');
+
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+    })->name('contact');    
+
 
 Route::middleware('auth')->group(function () {
     // Profile routes

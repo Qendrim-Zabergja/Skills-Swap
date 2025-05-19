@@ -23,9 +23,9 @@
                 <div>2025 SkillSwap. All rights reserved.</div>
                 <div class="flex space-x-4">
                     <Link href="/about" class="underline">About</Link>
-                    <a href="#" class="hover:underline">Terms</a>
-                    <a href="#" class="hover:underline">Privacy</a>
-                    <a href="#" class="hover:underline">Contact</a>
+                    <Link href="/terms" class="underline">Terms</Link>
+                    <Link href="/privacy" class="underline">Privacy</Link>
+                    <Link href="/contact" class="underline">Contact</Link>
                 </div>
             </div>
         </footer>
