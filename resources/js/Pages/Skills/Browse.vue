@@ -381,16 +381,23 @@ const filteredUsers = computed(() => {
 
     // Search filter
     if (search.value) {
-        const searchLower = search.value.toLowerCase();
+        const searchLower = search.value.toLowerCase().trim();
         filtered = filtered.filter(user => {
-            const mainSkill = user.teaching_skills[0];
-            return user.name.toLowerCase().includes(searchLower) ||
-                user.surname?.toLowerCase().includes(searchLower) ||
-                mainSkill?.name.toLowerCase().includes(searchLower) ||
-                mainSkill?.description.toLowerCase().includes(searchLower) ||
-                user.learning_skills.some(skill => 
-                    skill.name.toLowerCase().includes(searchLower)
-                );
+            // Check user's name
+            if (user.name.toLowerCase().includes(searchLower)) return true;
+            
+            // Check all teaching skills
+            if (user.teaching_skills?.some(skill => 
+                skill.name.toLowerCase().includes(searchLower) ||
+                skill.description?.toLowerCase().includes(searchLower)
+            )) return true;
+            
+            // Check all learning skills
+            if (user.learning_skills?.some(skill => 
+                skill.name.toLowerCase().includes(searchLower)
+            )) return true;
+            
+            return false;
         });
     }
 
@@ -405,9 +412,10 @@ const filteredUsers = computed(() => {
 
     // Rating filter
     if (selectedRatings.value.length > 0) {
-        filtered = filtered.filter(user =>
-            selectedRatings.value.some(rating => (user.average_rating || 0) >= rating)
-        );
+        filtered = filtered.filter(user => {
+            const userRating = user.rating || user.average_rating || 0;
+            return selectedRatings.value.some(rating => userRating >= rating);
+        });
     }
 
     // Exchange preferences filters
