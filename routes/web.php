@@ -16,9 +16,18 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'canLogin'    => Route::has('login'),
+        'canRegister' => Route::has('register'),
+    ]);
+})->name('home');
 Route::get('/about', function () {
     return Inertia::render('About');
 })->name('about');
+
+// Public routes
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
     // Profile routes
@@ -29,8 +38,6 @@ Route::middleware('auth')->group(function () {
 
     // Browse routes
     Route::get('/browse', [BrowseController::class, 'index'])->name('browse.index');
-
-    Route::get('/', [WelcomeController::class, 'index'])->name('home');
     // Skills routes
     Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
     Route::get('/skills/browse', [SkillController::class, 'browse'])->name('skills.browse');
