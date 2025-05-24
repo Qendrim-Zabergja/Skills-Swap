@@ -13,21 +13,43 @@
                     <p class="text-gray-600 mb-10">Exchange your expertise with others. No money involved - just knowledge sharing.</p>
                     
                     <!-- Search Section -->
-                    <div class="max-w-xl mx-auto flex items-center gap-2">
-                        <div class="flex-1 relative">
-                            <input 
-                                type="text" 
-                                v-model="searchQuery" 
-                                placeholder="Search skills (e.g., Graphic Design)" 
-                                class="w-full px-4 py-2 rounded border border-gray-200 focus:outline-none focus:border-gray-300 bg-white"
-                            />
+                    <div class="max-w-xl mx-auto">
+                        <div class="flex items-center gap-2 relative">
+                            <div class="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    v-model="searchQuery" 
+                                    @input="updateSearch"
+                                    @focus="showSuggestions = searchQuery.length > 0"
+                                    @blur="setTimeout(() => { showSuggestions = false }, 200)"
+                                    @keyup.enter="searchSkills"
+                                    placeholder="Search skills (e.g., Graphic Design)" 
+                                    class="w-full px-4 py-2 rounded border border-gray-200 focus:outline-none focus:border-gray-300 bg-white"
+                                    autocomplete="off"
+                                />
+                                
+                                <!-- Suggestions Dropdown -->
+                                <div 
+                                    v-if="showSuggestions && searchSuggestions.length > 0"
+                                    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                                >
+                                    <div 
+                                        v-for="(suggestion, index) in searchSuggestions" 
+                                        :key="index"
+                                        @mousedown="selectSuggestion(suggestion)"
+                                        class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    >
+                                        {{ suggestion }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                @click="searchSkills" 
+                                class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 whitespace-nowrap"
+                            >
+                                Find Skills
+                            </button>
                         </div>
-                        <button 
-                            @click="searchSkills" 
-                            class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 whitespace-nowrap"
-                        >
-                            Find Skills
-                        </button>
                     </div>
                 </div>
             </section>
@@ -222,6 +244,54 @@ export default defineComponent({
     },
 
     methods: {
+        updateSearch() {
+            // Clear any existing timeout
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+            
+            // Show suggestions if there's text
+            this.showSuggestions = this.searchQuery.length > 0;
+            
+            if (!this.showSuggestions) {
+                this.searchSuggestions = [];
+                return;
+            }
+            
+            // Generate suggestions from featured users
+            const searchLower = this.searchQuery.toLowerCase();
+            const suggestions = new Set();
+            
+            // Add user names
+            this.featuredUsers.forEach(user => {
+                if (user.name.toLowerCase().includes(searchLower)) {
+                    suggestions.add(user.name);
+                }
+            });
+            
+            // Add skill names
+            this.featuredUsers.forEach(user => {
+                user.teaching_skills?.forEach(skill => {
+                    if (skill.name.toLowerCase().includes(searchLower)) {
+                        suggestions.add(skill.name);
+                    }
+                });
+                user.learning_skills?.forEach(skill => {
+                    if (skill.name.toLowerCase().includes(searchLower)) {
+                        suggestions.add(`Learn: ${skill.name}`);
+                    }
+                });
+            });
+            
+            this.searchSuggestions = Array.from(suggestions).slice(0, 5); // Show top 5 suggestions
+        },
+        
+        selectSuggestion(suggestion) {
+            this.searchQuery = suggestion.replace('Learn: ', '');
+            this.showSuggestions = false;
+            this.searchSkills();
+        },
+        
         getInitials(name) {
             if (!name) return '';
             return name.split(' ').map(n => n[0]).join('').toUpperCase();
