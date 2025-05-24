@@ -107,7 +107,7 @@
             &copy; {{ new Date().getFullYear() }} SkillSwap. All rights reserved.
           </div>
           <div class="flex space-x-6">
-            <a href="#" class="text-sm text-gray-500 hover:underline">About</a>
+                    <Link :href="route('about')" class="hover:underline">About</Link>
             <a href="#" class="text-sm text-gray-500 hover:underline">Terms</a>
             <a href="#" class="text-sm text-gray-500 hover:underline">Privacy</a>
             <a href="#" class="text-sm text-gray-500 hover:underline">Contact</a>
