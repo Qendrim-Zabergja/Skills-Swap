@@ -237,10 +237,10 @@
               </div>
             </div>
 
-            <div class="p-4 border-t border-gray-200 text-center">
-              <Link :href="route('messages.index')" class="text-sm font-medium text-gray-900 hover:text-gray-700">
-              View All Messages
-              </Link>
+            <div v-if="hasMoreConversations" class="p-4 border-t border-gray-200 text-center">
+              <button @click="loadMoreConversations" class="text-sm font-medium text-gray-900 hover:text-gray-700 focus:outline-none">
+                Load More Messages
+              </button>
             </div>
           </div>
         </div>
@@ -420,7 +420,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Navbar from '@/Components/Navbar.vue';
@@ -444,6 +444,11 @@ const showRatingModal = ref(false);
 const selectedRequest = ref(null);
 const activeTab = ref('requests');
 const conversations = ref(props.initialConversations || []);
+const currentPage = ref(1);
+const lastPage = ref(1);
+const isLoading = ref(false);
+const hasMoreConversations = computed(() => currentPage.value < lastPage.value);
+
 const ratingForm = useForm({
   score: 0,
   comment: ''
@@ -607,14 +612,34 @@ const updatePhoto = (event) => {
   });
 };
 
-const fetchConversations = async () => {
+const fetchConversations = async (page = 1) => {
+  if (isLoading.value) return;
+  
   try {
-    const response = await axios.get(route('messages.conversations'));
-    conversations.value = response.data;
+    isLoading.value = true;
+    const response = await axios.get(route('messages.conversations', { page }));
+    
+    if (page === 1) {
+      conversations.value = response.data.data || [];
+    } else {
+      conversations.value = [...conversations.value, ...(response.data.data || [])];
+    }
+    
+    currentPage.value = response.data.current_page;
+    lastPage.value = response.data.last_page;
   } catch (error) {
     console.error('Error fetching conversations:', error);
-    // Fallback to empty array if there's an error
-    conversations.value = [];
+    if (page === 1) {
+      conversations.value = [];
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const loadMoreConversations = () => {
+  if (hasMoreConversations.value && !isLoading.value) {
+    fetchConversations(currentPage.value + 1);
   }
 };
 
