@@ -101,7 +101,7 @@
                                     v-model="search" 
                                     @input="updateSearch"
                                     @focus="showSuggestions = search.length > 0"
-                                    @blur="setTimeout(() => { showSuggestions = false }, 200)"
+                                    @blur="hideSuggestions"
                                     class="w-full pl-10 pr-4 py-2 border rounded-lg" 
                                     placeholder="Search skills or keywords..."
                                     autocomplete="off"
@@ -484,6 +484,12 @@ const selectSuggestion = (suggestion) => {
 
 const applyFilters = () => {
     updateSearch();
+};
+
+const hideSuggestions = () => {
+    setTimeout(() => {
+        showSuggestions.value = false;
+    }, 200);
 };
 
 const filteredUsers = computed(() => {

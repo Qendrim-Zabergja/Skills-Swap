@@ -21,7 +21,7 @@
                                     v-model="searchQuery" 
                                     @input="updateSearch"
                                     @focus="showSuggestions = searchQuery.length > 0"
-                                    @blur="setTimeout(() => { showSuggestions = false }, 200)"
+                                    @blur="hideSuggestions"
                                     @keyup.enter="searchSkills"
                                     placeholder="Search skills (e.g., Graphic Design)" 
                                     class="w-full px-4 py-2 rounded border border-gray-200 focus:outline-none focus:border-gray-300 bg-white"
@@ -300,6 +300,12 @@ export default defineComponent({
         handleImageError(userId) {
             console.log('Image error for user:', userId);
             this.imageLoadErrors.add(userId);
+        },
+
+        hideSuggestions() {
+            setTimeout(() => {
+                this.showSuggestions = false;
+            }, 200);
         },
 
         requestSwap(userId) {
