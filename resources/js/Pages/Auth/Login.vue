@@ -1,4 +1,5 @@
 <template>
+
   <Head title="Log in" />
 
   <div class="min-h-screen flex flex-col">
@@ -20,23 +21,18 @@
             <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
               {{ status }}
             </div>
-            <div v-if="errors.authentication" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            <div v-if="errors.authentication"
+              class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
               {{ errors.authentication }}
             </div>
 
             <!-- Email -->
             <div class="mb-4">
               <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input 
-                id="email" 
-                type="email" 
-                v-model="form.email"
+              <input id="email" type="email" v-model="form.email"
                 class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                :class="{'border-red-500': errors.email || form.errors.email, 'border-gray-300': !errors.email && !form.errors.email}"
-                placeholder="name@example.com" 
-                 
-                autofocus 
-              />
+                :class="{ 'border-red-500': errors.email || form.errors.email, 'border-gray-300': !errors.email && !form.errors.email }"
+                placeholder="name@example.com" autofocus />
               <p v-if="errors.email || form.errors.email" class="mt-1 text-sm text-red-600">
                 {{ errors.email || form.errors.email }}
               </p>
@@ -51,15 +47,10 @@
                 Forgot password?
                 </Link>
               </div>
-              <input 
-                id="password" 
-                type="password" 
-                v-model="form.password"
+              <input id="password" type="password" v-model="form.password"
                 class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                :class="{'border-red-500': errors.password || form.errors.password, 'border-gray-300': !errors.password && !form.errors.password}"
-                 
-                autocomplete="current-password" 
-              />
+                :class="{ 'border-red-500': errors.password || form.errors.password, 'border-gray-300': !errors.password && !form.errors.password }"
+                autocomplete="current-password" />
               <p v-if="errors.password || form.errors.password" class="mt-1 text-sm text-red-600">
                 {{ errors.password || form.errors.password }}
               </p>
@@ -67,23 +58,17 @@
 
             <!-- Remember Me -->
             <div class="mb-4 flex items-center">
-              <input 
-                id="remember" 
-                type="checkbox" 
-                v-model="form.remember"
-                class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-              />
+              <input id="remember" type="checkbox" v-model="form.remember"
+                class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded" />
               <label for="remember" class="ml-2 block text-sm text-gray-700">
                 Remember me
               </label>
             </div>
 
             <!-- Login Button -->
-            <button 
-              type="submit"
+            <button type="submit"
               class="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              :disabled="form.processing"
-            >
+              :disabled="form.processing">
               <span v-if="form.processing">Logging in...</span>
               <span v-else>Log in</span>
             </button>
@@ -110,10 +95,10 @@
             &copy; {{ new Date().getFullYear() }} SkillSwap. All rights reserved.
           </div>
           <div class="flex space-x-6">
-            <a href="#" class="text-sm text-gray-500 hover:underline">About</a>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Terms</a>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Privacy</a>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Contact</a>
+            <Link :href="route('about')" class="hover:underline">About</Link>
+            <Link href="/terms" class="hover:underline">Terms</Link>
+            <Link href="/privacy" class="hover:underline">Privacy</Link>
+            <Link href="/contact" class="hover:underline">Contact</Link>
           </div>
         </div>
       </div>
@@ -181,7 +166,7 @@ export default defineComponent({
       // Clear previous errors but keep form data
       errors.value = {};
       form.clearErrors();
-      
+
       if (validateForm()) {
         submit();
       }
@@ -200,39 +185,39 @@ export default defineComponent({
         password: form.password,
         remember: form.remember
       })
-      .then(response => {
-        // On successful login, redirect to home
-        window.location.href = route('home');
-      })
-      .catch(error => {
-        // Reset all errors
-        errors.value = {};
-        
-        if (error.response) {
-          const responseErrors = error.response.data.errors;
-          
-          // Handle server validation errors
-          if (responseErrors.email) {
-            errors.value.email = Array.isArray(responseErrors.email) ? responseErrors.email[0] : responseErrors.email;
-          }
-          if (responseErrors.password) {
-            errors.value.password = Array.isArray(responseErrors.password) ? responseErrors.password[0] : responseErrors.password;
-          }
-          
-          // If no specific field errors, show generic auth error
-          if (Object.keys(errors.value).length === 0) {
-            errors.value.authentication = 'These credentials do not match our records.';
-          }
-        } else {
-          // Network error or other issues
-          errors.value.authentication = 'An error occurred. Please try again.';
-        }
+        .then(response => {
+          // On successful login, redirect to home
+          window.location.href = route('home');
+        })
+        .catch(error => {
+          // Reset all errors
+          errors.value = {};
 
-        // Restore form data
-        form.email = formData.email;
-        form.password = ''; // Clear password for security
-        form.remember = formData.remember;
-      });
+          if (error.response) {
+            const responseErrors = error.response.data.errors;
+
+            // Handle server validation errors
+            if (responseErrors.email) {
+              errors.value.email = Array.isArray(responseErrors.email) ? responseErrors.email[0] : responseErrors.email;
+            }
+            if (responseErrors.password) {
+              errors.value.password = Array.isArray(responseErrors.password) ? responseErrors.password[0] : responseErrors.password;
+            }
+
+            // If no specific field errors, show generic auth error
+            if (Object.keys(errors.value).length === 0) {
+              errors.value.authentication = 'These credentials do not match our records.';
+            }
+          } else {
+            // Network error or other issues
+            errors.value.authentication = 'An error occurred. Please try again.';
+          }
+
+          // Restore form data
+          form.email = formData.email;
+          form.password = ''; // Clear password for security
+          form.remember = formData.remember;
+        });
     };
 
     return {

@@ -203,7 +203,16 @@ export default defineComponent({
     const submit = async () => {
       isLoading.value = true;
       errors.value = {};
-      
+
+      console.log('Submitting registration with data:', {
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        password: form.password,
+        password_confirmation: form.password_confirmation,
+        terms: form.terms,
+      });
+
       try {
         const response = await axios.post(route('register'), {
           name: `${form.first_name} ${form.last_name}`,
@@ -214,29 +223,39 @@ export default defineComponent({
           password_confirmation: form.password_confirmation,
           terms: form.terms,
         });
-        
+
+        console.log('Registration successful, redirecting...');
         // If successful, the server will redirect
         window.location.href = route('home');
       } catch (error) {
         console.error('Registration error:', error);
-        
-        if (error.response && error.response.status === 422) {
+        console.error('Error response:', error.response?.data);
+
+        if (error.response?.status === 422) {
           // Handle validation errors
           const validationErrors = error.response.data.errors || {};
           const formattedErrors = {};
-          
+
+          console.log('Validation errors:', validationErrors);
+
           // Format the errors to ensure they're in the correct format
           Object.keys(validationErrors).forEach(field => {
             // Take the first error message for each field
-            formattedErrors[field] = Array.isArray(validationErrors[field]) 
-              ? validationErrors[field][0] 
+            formattedErrors[field] = Array.isArray(validationErrors[field])
+              ? validationErrors[field][0]
               : validationErrors[field];
           });
-          
+
+          console.log('Formatted errors:', formattedErrors);
           errors.value = formattedErrors;
         } else {
           // Handle other types of errors
-          errors.value.general = error.response?.data?.message || 'An error occurred during registration. Please try again.';
+          const errorMessage = error.response?.data?.message || 
+                             error.response?.data?.error || 
+                             'An error occurred during registration. Please try again.';
+          
+          console.error('Registration failed:', errorMessage);
+          errors.value.general = errorMessage;
         }
       } finally {
         isLoading.value = false;
