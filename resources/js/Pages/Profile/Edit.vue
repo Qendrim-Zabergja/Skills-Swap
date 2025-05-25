@@ -221,7 +221,7 @@
                     </p>
                   </div>
                   <span class="text-xs text-gray-400">
-                    {{ formatMessageDate(conversation.last_message.created_at) }}
+                    {{ formatDate(conversation.last_message.created_at) }}
                   </span>
                 </div>
                 <div class="mt-2">
@@ -420,13 +420,14 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Navbar from '@/Components/Navbar.vue';
 import RatingStars from '@/Components/RatingStars.vue';
 import axios from 'axios';
 
+// Props definition
 const props = defineProps({
   user: Object,
   teachingSkills: Array,
@@ -439,21 +440,24 @@ const props = defineProps({
   }
 });
 
-const showEditModal = ref(false);
-const showRatingModal = ref(false);
-const selectedRequest = ref(null);
+// State management
 const activeTab = ref('requests');
 const conversations = ref(props.initialConversations || []);
 const currentPage = ref(1);
 const lastPage = ref(1);
 const isLoading = ref(false);
 const hasMoreConversations = computed(() => currentPage.value < lastPage.value);
+const showEditModal = ref(false);
+const showRatingModal = ref(false);
+const selectedRequest = ref(null);
+const incomingRequests = ref(props.incomingRequests || []);
+const outgoingRequests = ref(props.outgoingRequests || []);
+const newTeachingSkill = ref('');
+const newTeachingCategory = ref('');
+const newLearningSkill = ref('');
+const newLearningCategory = ref('');
 
-const ratingForm = useForm({
-  score: 0,
-  comment: ''
-});
-
+// Form state
 const form = useForm({
   name: props.user?.name || '',
   email: props.user?.email || '',
@@ -464,11 +468,12 @@ const form = useForm({
   learningSkills: props.learningSkills || []
 });
 
-const newTeachingSkill = ref('');
-const newTeachingCategory = ref('');
-const newLearningSkill = ref('');
-const newLearningCategory = ref('');
+const ratingForm = useForm({
+  score: 0,
+  comment: ''
+});
 
+// Categories
 const categories = [
   'Design',
   'Development',
@@ -480,8 +485,63 @@ const categories = [
   'Education'
 ];
 
-const incomingRequests = ref(props.incomingRequests || []);
-const outgoingRequests = ref(props.outgoingRequests || []);
+// Functions
+const fetchConversations = async (page = 1) => {
+  try {
+    isLoading.value = true;
+    const response = await axios.get(route('messages.conversations'), { params: { page } });
+    if (page === 1) {
+      conversations.value = response.data || [];
+    } else {
+      conversations.value = [...conversations.value, ...(response.data || [])];
+    }
+    
+    currentPage.value = page;
+    lastPage.value = Math.ceil(response.data.length / 10); // Assuming 10 items per page
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    if (page === 1) {
+      conversations.value = [];
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const loadMoreConversations = () => {
+  if (hasMoreConversations.value && !isLoading.value) {
+    fetchConversations(currentPage.value + 1);
+  }
+};
+
+const openConversation = (conversation) => {
+  router.visit(route('messages.show', conversation.other_user.id));
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+
+  // If today, show time
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // If yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  }
+
+  // If this year, show month and day
+  if (date.getFullYear() === now.getFullYear()) {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  // Otherwise, show full date
+  return date.toLocaleDateString();
+};
 
 const getInitials = (name) => {
   if (!name) return '';
@@ -559,108 +619,6 @@ const saveProfile = () => {
   });
 };
 
-const formatDate = (date) => {
-  if (!date) return '';
-  return new Date(date).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-};
-
-const formatMessageDate = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-
-  // If today, show time
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  // If yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  }
-
-  // If this year, show month and day
-  if (date.getFullYear() === now.getFullYear()) {
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
-
-  // Otherwise, show full date
-  return date.toLocaleDateString();
-};
-
-const updatePhoto = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('photo', file);
-
-  router.post(route('profile.photo.update'), formData, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Reload the page to update the photo
-      router.reload();
-    },
-  });
-};
-
-const fetchConversations = async (page = 1) => {
-  if (isLoading.value) return;
-  
-  try {
-    isLoading.value = true;
-    const response = await axios.get(route('messages.conversations', { page }));
-    
-    if (page === 1) {
-      conversations.value = response.data.data || [];
-    } else {
-      conversations.value = [...conversations.value, ...(response.data.data || [])];
-    }
-    
-    currentPage.value = response.data.current_page;
-    lastPage.value = response.data.last_page;
-  } catch (error) {
-    console.error('Error fetching conversations:', error);
-    if (page === 1) {
-      conversations.value = [];
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const loadMoreConversations = () => {
-  if (hasMoreConversations.value && !isLoading.value) {
-    fetchConversations(currentPage.value + 1);
-  }
-};
-
-const openConversation = (conversation) => {
-  router.visit(route('messages.show', conversation.other_user.id));
-};
-
-watch(() => props.incomingRequests, (newRequests) => {
-  incomingRequests.value = newRequests;
-}, { deep: true });
-
-watch(() => props.outgoingRequests, (newRequests) => {
-  outgoingRequests.value = newRequests;
-}, { deep: true });
-
-watch(activeTab, (newTab) => {
-  if (newTab === 'messages') {
-    fetchConversations();
-  }
-});
-
 const openRatingModal = (request) => {
   selectedRequest.value = request;
   showRatingModal.value = true;
@@ -694,7 +652,30 @@ const submitRating = () => {
   });
 };
 
-// Fetch conversations if initial data wasn't provided
+const updatePhoto = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  router.post(route('profile.photo.update'), formData, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Reload the page to update the photo
+      router.reload();
+    },
+  });
+};
+
+// Watch for tab changes and fetch conversations when needed
+watch(activeTab, (newTab) => {
+  if (newTab === 'messages') {
+    fetchConversations();
+  }
+});
+
+// Fetch conversations if messages tab is active on mount
 onMounted(() => {
   if (activeTab.value === 'messages' && conversations.value.length === 0) {
     fetchConversations();
