@@ -3,7 +3,8 @@ namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
 use App\Models\Message;
-use App\Models\Request as SkillRequest;
+use App\Models\SkillRequest;
+use App\Models\SwapRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,10 +86,10 @@ class MessageController extends Controller
         $request       = SkillRequest::where(function ($query) use ($currentUser, $user) {
             $query->where(function ($q) use ($currentUser, $user) {
                 $q->where('sender_id', $currentUser->id)
-                    ->where('receiver_id', $user->id);
+                    ->where('recipient_id', $user->id);
             })->orWhere(function ($q) use ($currentUser, $user) {
                 $q->where('sender_id', $user->id)
-                    ->where('receiver_id', $currentUser->id);
+                    ->where('recipient_id', $currentUser->id);
             });
         })
             ->where('status', 'accepted')
@@ -166,31 +167,45 @@ class MessageController extends Controller
     // Add this method to your MessageController
     public function conversations()
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        $conversations = Message::where('user_id', $user->id)
-            ->orWhere('recipient_id', $user->id)
-            ->with(['user', 'recipient'])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->groupBy(function ($message) use ($user) {
-                return $message->user_id === $user->id ? $message->recipient_id : $message->user_id;
-            })
-            ->map(function ($messages) use ($user) {
-                $lastMessage = $messages->first();
-                $otherUser   = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
+            $conversations = Message::where('user_id', $user->id)
+                ->orWhere('recipient_id', $user->id)
+                ->with(['user', 'recipient'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function ($message) use ($user) {
+                    return $message->user_id === $user->id ? $message->recipient_id : $message->user_id;
+                })
+                ->map(function ($messages) use ($user) {
+                    $lastMessage = $messages->first();
+                    $otherUser   = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
 
                 // Get the skill exchange context from the associated swap request if it exists
-                $swapRequest = SkillRequest::where(function ($query) use ($user, $otherUser) {
-                    $query->where('sender_id', $user->id)
-                        ->where('receiver_id', $otherUser->id);
+                $swapRequest = SwapRequest::where(function ($query) use ($user, $otherUser) {
+                    $query->where('user_id', $user->id)
+                        ->where('recipient_id', $otherUser->id);
                 })
                     ->orWhere(function ($query) use ($user, $otherUser) {
-                        $query->where('sender_id', $otherUser->id)
-                            ->where('receiver_id', $user->id);
+                        $query->where('user_id', $otherUser->id)
+                            ->where('recipient_id', $user->id);
                     })
-                    ->where('status', 'accepted')
+                    ->where('status', 'Accepted')
                     ->first();
+
+                // Get the skill names based on who is the sender
+                $skillWanted = '';
+                $skillOffered = '';
+                if ($swapRequest) {
+                    if ($swapRequest->user_id === $user->id) {
+                        $skillWanted = $swapRequest->skill_wanted;
+                        $skillOffered = $swapRequest->skill_offered;
+                    } else {
+                        $skillWanted = $swapRequest->skill_offered;
+                        $skillOffered = $swapRequest->skill_wanted;
+                    }
+                }
 
                 return [
                     'id'            => $lastMessage->id,
@@ -198,8 +213,8 @@ class MessageController extends Controller
                         'id'   => $otherUser->id,
                         'name' => $otherUser->name,
                     ],
-                    'skill_offered' => $swapRequest ? $swapRequest->skill_offered : 'Unknown Skill',
-                    'skill_wanted'  => $swapRequest ? $swapRequest->skill_wanted : 'Unknown Skill',
+                    'skill_offered' => $skillOffered,
+                    'skill_wanted'  => $skillWanted,
                     'last_message'  => [
                         'content'    => $lastMessage->content,
                         'created_at' => $lastMessage->created_at,
@@ -209,6 +224,13 @@ class MessageController extends Controller
             ->values()
             ->toArray();
 
-        return response()->json($conversations);
+            return response()->json($conversations);
+        } catch (\Exception $e) {
+            \Log::error('Error in conversations method: ' . $e->getMessage(), [
+                'exception' => $e,
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['error' => 'An error occurred while fetching conversations'], 500);
+        }
     }
 }

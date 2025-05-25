@@ -20,6 +20,15 @@ class SkillRequest extends Model
         'status'
     ];
 
+    protected $attributes = [
+        'status' => 'Pending'
+    ];
+
+    protected $casts = [
+        'learning_skill' => 'string',
+        'teaching_skill' => 'string'
+    ];
+
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
