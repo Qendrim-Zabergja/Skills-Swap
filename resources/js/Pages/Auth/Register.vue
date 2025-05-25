@@ -139,8 +139,14 @@
               </div>
               <div class="ml-3">
                 <label for="terms" class="block text-sm text-gray-700">
-                  I agree to the <a href="#" class="font-medium text-black hover:underline">Terms of Service</a> and <a
-                    href="#" class="font-medium text-black hover:underline">Privacy Policy</a>
+                  I agree to the 
+                  <a href="#" @click.prevent="showTermsModal = true" class="font-medium text-black hover:underline">
+                    Terms of Service
+                  </a> 
+                  and 
+                  <a href="#" @click.prevent="showPrivacyModal = true" class="font-medium text-black hover:underline">
+                    Privacy Policy
+                  </a>
                   <span class="text-red-600">*</span>
                 </label>
                 <p v-if="errors.terms" class="mt-1 text-sm text-red-600">
@@ -149,6 +155,7 @@
               </div>
             </div>
           </div>
+          
 
           <!-- Submit Button -->
           <button type="submit"
@@ -174,6 +181,69 @@
       </div>
     </div>
   </div>
+  <!-- Terms Modal -->
+<div v-if="showTermsModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg max-h-[80vh] overflow-y-auto">
+    <h3 class="text-xl font-bold mb-4">Terms of Service</h3>
+    <p class="text-sm text-gray-700 mb-3">
+      Welcome to SkillSwap! By accessing or using our platform, you agree to comply with and be bound by these Terms of Service. Please read them carefully.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      1. <strong>Account Responsibility:</strong> You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      2. <strong>User Conduct:</strong> You agree not to use SkillSwap for any unlawful or prohibited activities. Respect other users and refrain from harassment, discrimination, or harmful behavior.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      3. <strong>Content Ownership:</strong> You retain ownership of your content, but grant SkillSwap a license to display and distribute it within the platform.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      4. <strong>Modifications:</strong> We may update or modify these Terms from time to time. Continued use of the service constitutes acceptance of those changes.
+    </p>
+    <p class="text-sm text-gray-700">
+      For full details, please visit our website or contact support for any questions.
+    </p>
+    <div class="mt-6 text-right">
+      <button @click="showTermsModal = false"
+              class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+       <!-- Privacy Policy Modal -->
+<div v-if="showPrivacyModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg max-h-[80vh] overflow-y-auto">
+    <h3 class="text-xl font-bold mb-4">Privacy Policy</h3>
+    <p class="text-sm text-gray-700 mb-3">
+      At SkillSwap, we value your privacy and are committed to protecting your personal information.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      1. <strong>Information Collection:</strong> We collect personal data that you provide during registration and use of our services, including your name, email, and profile details.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      2. <strong>Use of Data:</strong> Your data is used to provide and improve our services, communicate updates, and personalize your experience.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      3. <strong>Data Sharing:</strong> We do not sell your information to third parties. We may share data with trusted service providers under strict confidentiality agreements.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      4. <strong>Security:</strong> We implement appropriate technical and organizational measures to safeguard your information.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      5. <strong>Your Rights:</strong> You can access, correct, or request deletion of your personal data by contacting our support team.
+    </p>
+    <p class="text-sm text-gray-700">
+      For more details, please refer to our full Privacy Policy on the website.
+    </p>
+    <div class="mt-6 text-right">
+      <button @click="showPrivacyModal = false"
+              class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 </template>
 
 <script>
@@ -199,6 +269,10 @@ export default defineComponent({
 
     const isLoading = ref(false);
     const errors = ref({});
+
+       // Modal state refs
+    const showTermsModal = ref(false);
+    const showPrivacyModal = ref(false);
 
     const submit = async () => {
       isLoading.value = true;
@@ -267,6 +341,8 @@ export default defineComponent({
       errors,
       isLoading,
       submit,
+      showTermsModal,
+      showPrivacyModal,
     };
   },
 });
