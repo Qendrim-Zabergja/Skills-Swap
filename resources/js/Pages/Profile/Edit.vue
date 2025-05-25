@@ -106,9 +106,9 @@
           <!-- Swap Requests Tab Content -->
           <div v-if="activeTab === 'requests'">
             <!-- Incoming Requests -->
-            <div class="space-y-4">
+            <div class="space-y-4 w-full max-w-4xl">
               <div v-for="request in incomingRequests" :key="request.id"
-                class="flex items-center justify-between p-4 bg-white border rounded-lg">
+                class="flex items-center justify-between p-6 bg-white border rounded-lg w-full">
                 <div class="flex items-center space-x-4">
                   <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                     {{ getInitials(request.user.name) }}
@@ -125,7 +125,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-4 ml-8">
                   <template v-if="request.status === 'Pending'">
                     <button @click="acceptRequest(request.id)"
                       class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200">
@@ -138,11 +138,11 @@
                   </template>
                   <template v-else-if="request.status === 'Accepted'">
                     <Link :href="route('messages.show', request.user.id)"
-                      class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+                      class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 mr-4">
                     Message
                     </Link>
                     <button v-if="!request.rated" @click="openRatingModal(request)"
-                      class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 ml-2">
+                      class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200">
                       Rate
                     </button>
                     <div class="text-sm text-green-600">Accepted</div>
@@ -161,9 +161,9 @@
 
             <!-- Outgoing Requests -->
             <h3 class="font-medium text-lg mt-8 mb-4">Outgoing Requests</h3>
-            <div class="space-y-4">
+            <div class="space-y-4 w-full max-w-4xl">
               <div v-for="request in outgoingRequests" :key="request.id"
-                class="group relative p-4 bg-white border rounded-lg">
+                class="group relative p-6 bg-white border rounded-lg w-full">
                 <button v-if="request.status === 'Pending'" @click="cancelRequest(request.id)"
                   class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-700 bg-gray-100 rounded-full shadow-sm z-50 hover:bg-gray-200">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
