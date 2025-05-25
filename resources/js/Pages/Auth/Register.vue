@@ -1,4 +1,5 @@
 <template>
+
   <Head title="Register" />
 
   <div class="min-h-screen flex items-center justify-center bg-white">
@@ -9,120 +10,161 @@
 
         <form @submit.prevent="submit">
           <!-- Validation Errors -->
-          <div v-if="form.errors && Object.keys(form.errors).length > 0" class="mb-4">
-            <div v-for="(error, key) in form.errors" :key="key" class="text-sm text-red-600">
-              {{ error }}
+          <div v-if="Object.keys(errors).length > 0" class="mb-4">
+            <div v-if="errors.general" class="text-sm text-red-600 mb-2">
+              {{ errors.general }}
             </div>
           </div>
 
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input 
-                id="first_name" 
-                type="text" 
-                v-model="form.first_name"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                required 
-                autofocus 
-                autocomplete="given-name" 
-              />
+            <!-- First Name -->
+            <div class="mb-4">
+              <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">
+                First Name <span class="text-red-600">*</span>
+              </label>
+              <input id="first_name" type="text" v-model="form.first_name"
+                :class="{
+                  'border-red-500': errors.first_name, 
+                  'border-gray-300': !errors.first_name,
+                  'focus:ring-red-500': errors.first_name,
+                  'focus:ring-black': !errors.first_name
+                }"
+                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                :disabled="isLoading"
+                autofocus autocomplete="given-name" />
+              <p v-if="errors.first_name" class="mt-1 text-sm text-red-600">
+                <span class="font-medium">⚠</span> {{ errors.first_name }}
+              </p>
             </div>
-            <div>
-              <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input 
-                id="last_name" 
-                type="text" 
-                v-model="form.last_name"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                required 
-                autocomplete="family-name" 
-              />
+            <!-- Last Name -->
+            <div class="mb-4">
+              <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">
+                Last Name <span class="text-red-600">*</span>
+              </label>
+              <input id="last_name" type="text" v-model="form.last_name"
+                :class="{
+                  'border-red-500': errors.last_name, 
+                  'border-gray-300': !errors.last_name,
+                  'focus:ring-red-500': errors.last_name,
+                  'focus:ring-black': !errors.last_name
+                }"
+                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                :disabled="isLoading"
+                autocomplete="family-name" />
+              <p v-if="errors.last_name" class="mt-1 text-sm text-red-600">
+                <span class="font-medium">⚠</span> {{ errors.last_name }}
+              </p>
             </div>
           </div>
 
           <!-- Email -->
           <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input 
-              id="email" 
-              type="email" 
-              v-model="form.email"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-              required 
-              autocomplete="email" 
-            />
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+              Email <span class="text-red-600">*</span>
+            </label>
+            <input id="email" type="email" v-model="form.email"
+              :class="{
+                'border-red-500': errors.email, 
+                'border-gray-300': !errors.email,
+                'focus:ring-red-500': errors.email,
+                'focus:ring-black': !errors.email
+              }"
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+              :disabled="isLoading"
+              autocomplete="email" />
+            <p v-if="errors.email" class="mt-1 text-sm text-red-600">
+              <span class="font-medium">⚠</span> {{ errors.email }}
+            </p>
           </div>
 
           <!-- Password -->
           <div class="mb-4">
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input 
-              id="password" 
-              type="password" 
-              v-model="form.password"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-              required 
-              autocomplete="new-password" 
-            />
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+              Password <span class="text-red-600">*</span>
+            </label>
+            <input id="password" type="password" v-model="form.password"
+              :class="{
+                'border-red-500': errors.password, 
+                'border-gray-300': !errors.password,
+                'focus:ring-red-500': errors.password,
+                'focus:ring-black': !errors.password
+              }"
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+              :disabled="isLoading"
+               autocomplete="new-password" />
+            <p v-if="errors.password" class="mt-1 text-sm text-red-600">
+              <span class="font-medium">⚠</span> {{ errors.password }}
+            </p>
             <p class="text-xs text-gray-500 mt-1">
-              Password must be at least 8 characters long and include a number and a special character.
+              Password must be at least 8 characters long and include:
+              <span :class="{'text-red-600': errors.password}">
+                one uppercase letter, one lowercase letter, one number, and one special character.
+              </span>
             </p>
           </div>
 
           <!-- Confirm Password -->
           <div class="mb-4">
             <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
+              Confirm Password <span class="text-red-600">*</span>
             </label>
-            <input 
-              id="password_confirmation" 
-              type="password" 
-              v-model="form.password_confirmation"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-              required 
-              autocomplete="new-password" 
-            />
+            <input id="password_confirmation" type="password" v-model="form.password_confirmation"
+              :class="{
+                'border-red-500': errors.password_confirmation, 
+                'border-gray-300': !errors.password_confirmation,
+                'focus:ring-red-500': errors.password_confirmation,
+                'focus:ring-black': !errors.password_confirmation
+              }"
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+              :disabled="isLoading"
+               autocomplete="new-password" />
+            <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">
+              <span class="font-medium">⚠</span> {{ errors.password_confirmation }}
+            </p>
           </div>
 
           <!-- Terms and Conditions -->
-          <div class="flex items-start mb-6">
-            <input 
-              id="terms" 
-              type="checkbox" 
-              v-model="termsAccepted"
-              class="h-4 w-4 text-black border-gray-300 rounded focus:ring-black mt-0.5"
-              required 
-            />
-            <label for="terms" class="ml-2 block text-sm text-gray-700">
-              I agree to the 
-              <button 
-                type="button" 
-                @click="showTermsModal = true" 
-                class="font-medium text-black hover:underline focus:outline-none focus:underline"
-              >
-                Terms of Service
-              </button> 
-              and 
-              <button 
-                type="button" 
-                @click="showPrivacyModal = true"
-                class="font-medium text-black hover:underline focus:outline-none focus:underline"
-              >
-                Privacy Policy
-              </button>
-            </label>
+          <div class="mb-6">
+            <div class="flex items-start">
+              <div class="flex items-center h-5">
+                <input id="terms" type="checkbox" v-model="form.terms"
+                  :class="{
+                    'border-red-500': errors.terms,
+                    'border-gray-300': !errors.terms,
+                    'focus:ring-red-500': errors.terms,
+                    'focus:ring-black': !errors.terms
+                  }"
+                  class="h-4 w-4 text-black rounded focus:ring-2 focus:ring-offset-2" />
+              </div>
+              <div class="ml-3">
+                <label for="terms" class="block text-sm text-gray-700">
+                  I agree to the 
+                  <a href="#" @click.prevent="showTermsModal = true" class="font-medium text-black hover:underline">
+                    Terms of Service
+                  </a> 
+                  and 
+                  <a href="#" @click.prevent="showPrivacyModal = true" class="font-medium text-black hover:underline">
+                    Privacy Policy
+                  </a>
+                  <span class="text-red-600">*</span>
+                </label>
+                <p v-if="errors.terms" class="mt-1 text-sm text-red-600">
+                  <span class="font-medium">⚠</span> {{ errors.terms }}
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Submit Button -->
-          <button 
-            type="submit"
-            class="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
-            :disabled="form.processing"
-          >
-            <span v-if="form.processing">Creating Account...</span>
-            <span v-else>Sign Up</span>
+          <button type="submit"
+            class="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 flex justify-center items-center"
+            :disabled="isLoading">
+            <svg v-if="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isLoading ? 'Creating Account...' : 'Sign Up' }}
           </button>
         </form>
 
@@ -131,7 +173,7 @@
           <p class="text-sm text-gray-600">
             Already have an account?
             <Link href="/login" class="text-black hover:underline font-medium">
-              Log in
+            Log in
             </Link>
           </p>
         </div>
@@ -139,124 +181,78 @@
     </div>
   </div>
 
-  <!-- Terms of Service Modal -->
-  <Teleport to="body">
-    <div 
-      v-if="showTermsModal" 
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click.self="showTermsModal = false"
-    >
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">Terms of Service</h3>
-            <button 
-              @click="showTermsModal = false" 
-              class="text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <p class="text-sm text-gray-600 mt-1">Please read our terms of service carefully.</p>
-        </div>
-        
-        <div class="p-6 overflow-y-auto flex-1">
-          <div class="space-y-4 text-sm">
-            <section>
-              <h4 class="font-semibold text-base mb-2">1. Acceptance of Terms</h4>
-              <p>By accessing and using SkillSwap, you accept and agree to be bound by the terms and provision of this agreement.</p>
-            </section>
-
-            <section>
-              <h4 class="font-semibold text-base mb-2">2. Use License</h4>
-              <p>Permission is granted to temporarily download one copy of SkillSwap per device for personal, non-commercial transitory viewing only.</p>
-            </section>
-
-            <section>
-              <h4 class="font-semibold text-base mb-2">3. Skill Exchange Guidelines</h4>
-              <p>Users must provide accurate information about their skills and availability. All skill exchanges should be conducted in good faith and with mutual respect.</p>
-            </section>
-
-            <section>
-              <h4 class="font-semibold text-base mb-2">4. User Conduct</h4>
-              <p>Users agree not to use the service for any unlawful purpose or to solicit others to perform unlawful acts.</p>
-            </section>
-          </div>
-        </div>
-        
-        <div class="p-6 border-t border-gray-200">
-          <button 
-            @click="showTermsModal = false" 
-            class="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            Close
-          </button>
-        </div>
-      </div>
+  <!-- Terms Modal -->
+<div v-if="showTermsModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg max-h-[80vh] overflow-y-auto">
+    <h3 class="text-xl font-bold mb-4">Terms of Service</h3>
+    <p class="text-sm text-gray-700 mb-3">
+      Welcome to SkillSwap! By accessing or using our platform, you agree to comply with and be bound by these Terms of Service. Please read them carefully.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      1. <strong>Account Responsibility:</strong> You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      2. <strong>User Conduct:</strong> You agree not to use SkillSwap for any unlawful or prohibited activities. Respect other users and refrain from harassment, discrimination, or harmful behavior.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      3. <strong>Content Ownership:</strong> You retain ownership of your content, but grant SkillSwap a license to display and distribute it within the platform.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      4. <strong>Modifications:</strong> We may update or modify these Terms from time to time. Continued use of the service constitutes acceptance of those changes.
+    </p>
+    <p class="text-sm text-gray-700">
+      For full details, please visit our website or contact support for any questions.
+    </p>
+    <div class="mt-6 text-right">
+      <button @click="showTermsModal = false"
+              class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+        Close
+      </button>
     </div>
-  </Teleport>
+  </div>
+</div>
 
   <!-- Privacy Policy Modal -->
-  <Teleport to="body">
-    <div 
-      v-if="showPrivacyModal" 
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click.self="showPrivacyModal = false"
-    >
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">Privacy Policy</h3>
-            <button 
-              @click="showPrivacyModal = false" 
-              class="text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <p class="text-sm text-gray-600 mt-1">Learn how we collect, use, and protect your personal information.</p>
-        </div>
-        
-        <div class="p-6 overflow-y-auto flex-1">
-          <div class="space-y-4 text-sm">
-            <section>
-              <h4 class="font-semibold text-base mb-2">Information We Collect</h4>
-              <p>We collect information you provide directly to us, such as when you create an account, update your profile, or contact us for support.</p>
-            </section>
-
-            <section>
-              <h4 class="font-semibold text-base mb-2">How We Use Your Information</h4>
-              <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
-            </section>
-
-            <section>
-              <h4 class="font-semibold text-base mb-2">Data Security</h4>
-              <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
-            </section>
-          </div>
-        </div>
-        
-        <div class="p-6 border-t border-gray-200">
-          <button 
-            @click="showPrivacyModal = false" 
-            class="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            Close
-          </button>
-        </div>
-      </div>
+  <div v-if="showPrivacyModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg max-h-[80vh] overflow-y-auto">
+    <h3 class="text-xl font-bold mb-4">Privacy Policy</h3>
+    <p class="text-sm text-gray-700 mb-3">
+      At SkillSwap, we value your privacy and are committed to protecting your personal information.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      1. <strong>Information Collection:</strong> We collect personal data that you provide during registration and use of our services, including your name, email, and profile details.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      2. <strong>Use of Data:</strong> Your data is used to provide and improve our services, communicate updates, and personalize your experience.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      3. <strong>Data Sharing:</strong> We do not sell your information to third parties. We may share data with trusted service providers under strict confidentiality agreements.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      4. <strong>Security:</strong> We implement appropriate technical and organizational measures to safeguard your information.
+    </p>
+    <p class="text-sm text-gray-700 mb-3">
+      5. <strong>Your Rights:</strong> You can access, correct, or request deletion of your personal data by contacting our support team.
+    </p>
+    <p class="text-sm text-gray-700">
+      For more details, please refer to our full Privacy Policy on the website.
+    </p>
+    <div class="mt-6 text-right">
+      <button @click="showPrivacyModal = false"
+              class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
+        Close
+      </button>
     </div>
-  </Teleport>
+  </div>
+</div>
+
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue'
-import { Head, Link } from '@inertiajs/inertia-vue3'
-import { useForm } from '@inertiajs/inertia-vue3'
+import { defineComponent, ref } from 'vue';
+import { Head, Link } from '@inertiajs/inertia-vue3';
+import { useForm } from '@inertiajs/inertia-vue3';
+import axios from 'axios';
 
 export default defineComponent({
   components: {
@@ -264,47 +260,73 @@ export default defineComponent({
     Link,
   },
   setup() {
-    const showTermsModal = ref(false)
-    const showPrivacyModal = ref(false)
-    const termsAccepted = ref(false)
-
     const form = useForm({
       first_name: '',
       last_name: '',
       email: '',
       password: '',
       password_confirmation: '',
-    })
+      terms: false,
+    });
 
-    const submit = () => {
-      // Validate terms acceptance
-      if (!termsAccepted.value) {
-        alert('Please agree to the Terms of Service and Privacy Policy')
-        return
-      }
+    const isLoading = ref(false);
+    const errors = ref({});
 
-      // Transform data and submit
-      form.transform((data) => ({
-        ...data,
-        name: `${data.first_name} ${data.last_name}`,
-        terms_accepted: termsAccepted.value,
-      })).post('/register', {
-        onFinish: () => {
-          form.reset('password', 'password_confirmation')
-        },
-        onError: (errors) => {
-          console.error('Registration errors:', errors)
+    // Modal state refs
+    const showTermsModal = ref(false);
+    const showPrivacyModal = ref(false);
+
+    const submit = async () => {
+      isLoading.value = true;
+      errors.value = {};
+      
+      try {
+        const response = await axios.post(route('register'), {
+          name: `${form.first_name} ${form.last_name}`,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          email: form.email,
+          password: form.password,
+          password_confirmation: form.password_confirmation,
+          terms: form.terms,
+        });
+        
+        // If successful, the server will redirect
+        window.location.href = route('home');
+      } catch (error) {
+        console.error('Registration error:', error);
+        
+        if (error.response && error.response.status === 422) {
+          // Handle validation errors
+          const validationErrors = error.response.data.errors || {};
+          const formattedErrors = {};
+          
+          // Format the errors to ensure they're in the correct format
+          Object.keys(validationErrors).forEach(field => {
+            // Take the first error message for each field
+            formattedErrors[field] = Array.isArray(validationErrors[field]) 
+              ? validationErrors[field][0] 
+              : validationErrors[field];
+          });
+          
+          errors.value = formattedErrors;
+        } else {
+          // Handle other types of errors
+          errors.value.general = error.response?.data?.message || 'An error occurred during registration. Please try again.';
         }
-      })
-    }
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
     return {
       form,
+      errors,
+      isLoading,
       submit,
       showTermsModal,
       showPrivacyModal,
-      termsAccepted,
-    }
+    };
   },
-})
+});
 </script>
