@@ -107,10 +107,10 @@
             &copy; {{ new Date().getFullYear() }} SkillSwap. All rights reserved.
           </div>
           <div class="flex space-x-6">
-                    <Link :href="route('about')" class="hover:underline">About</Link>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Terms</a>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Privacy</a>
-            <a href="#" class="text-sm text-gray-500 hover:underline">Contact</a>
+            <Link :href="route('about')" class="hover:underline">About</Link>
+            <Link href="/terms" class="hover:underline">Terms</Link>
+            <Link href="/privacy" class="hover:underline">Privacy</Link>
+            <Link href="/contact" class="hover:underline">Contact</Link>
           </div>
         </div>
       </div>
@@ -120,8 +120,7 @@
 
 <script>
 import { defineComponent, ref } from 'vue';
-import { Head, Link } from '@inertiajs/inertia-vue3';
-import { useForm } from '@inertiajs/inertia-vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 
 export default defineComponent({
   components: {
