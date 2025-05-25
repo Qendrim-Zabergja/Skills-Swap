@@ -95,15 +95,36 @@
                     <!-- Search Bar -->
                     <div class="mb-6">
                         <div class="relative">
-                            <input 
-                                type="text" 
-                                v-model="search" 
-                                class="w-full pl-10 pr-4 py-2 border rounded-lg" 
-                                placeholder="Search skills or keywords..."
-                            >
-                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <div class="relative w-full">
+                                <input 
+                                    type="text" 
+                                    v-model="search" 
+                                    @input="updateSearch"
+                                    @focus="showSuggestions = search.length > 0"
+                                    @blur="hideSuggestions"
+                                    class="w-full pl-10 pr-4 py-2 border rounded-lg" 
+                                    placeholder="Search skills or keywords..."
+                                    autocomplete="off"
+                                >
+                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                
+                                <!-- Suggestions Dropdown -->
+                                <div 
+                                    v-if="showSuggestions && searchSuggestions.length > 0"
+                                    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                                >
+                                    <div 
+                                        v-for="(suggestion, index) in searchSuggestions" 
+                                        :key="index"
+                                        @mousedown="selectSuggestion(suggestion)"
+                                        class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    >
+                                        {{ suggestion }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -121,7 +142,8 @@
                                         <!-- Rating Display -->
                                         <div class="flex items-center gap-1">
                                             <span class="text-yellow-400 text-sm">★</span>
-                                            <span class="text-sm">{{ user.average_rating || 'N/A' }}</span>
+                                            <span class="text-sm">{{ user.rating ? user.rating.toFixed(1) : 'N/A' }}</span>
+                                            <span class="text-xs text-gray-400" v-if="user.rating">({{ user.total_ratings }})</span>
                                         </div>
                                     </div>
                                     <p class="text-sm text-gray-500">{{ user.location || 'Location not set' }}</p>
@@ -331,8 +353,12 @@ const categories = [
     'Education'
 ];
 
-const search = ref('');
-const selectedCategories = ref([]);
+// Get search query from URL
+const search = ref(route().params.search || '');
+const selectedCategories = ref(route().params.category ? [route().params.category] : []);
+const searchTimeout = ref(null);
+const showSuggestions = ref(false);
+const searchSuggestions = ref([]);
 const selectedRatings = ref([]);
 const currentPage = ref(1);
 const itemsPerPage = 10;
@@ -369,10 +395,101 @@ const resetFilters = () => {
     };
     search.value = '';
     currentPage.value = 1;
+    // Update URL without page reload
+    router.get(route('skills.browse'), {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    });
+};
+
+const updateSearch = () => {
+    // Clear any existing timeout
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+    
+    // Show suggestions if there's text
+    showSuggestions.value = search.value.length > 0;
+    
+    if (!showSuggestions.value) {
+        searchSuggestions.value = [];
+        return;
+    }
+    
+    // Generate suggestions from current data
+    const searchLower = search.value.toLowerCase();
+    const suggestions = new Set();
+    
+    // Add user names
+    props.users.forEach(user => {
+        if (user.name.toLowerCase().includes(searchLower)) {
+            suggestions.add(user.name);
+        }
+    });
+    
+    // Add skill names
+    props.users.forEach(user => {
+        user.teaching_skills?.forEach(skill => {
+            if (skill.name.toLowerCase().includes(searchLower)) {
+                suggestions.add(skill.name);
+            }
+        });
+        user.learning_skills?.forEach(skill => {
+            if (skill.name.toLowerCase().includes(searchLower)) {
+                suggestions.add(`Learn: ${skill.name}`);
+            }
+        });
+    });
+    
+    searchSuggestions.value = Array.from(suggestions).slice(0, 5); // Show top 5 suggestions
+    
+    // Set a new timeout for the actual search
+    searchTimeout.value = setTimeout(() => {
+        currentPage.value = 1;
+        
+        // Update URL with current filters
+        const params = {};
+        if (search.value) params.search = search.value;
+        if (selectedCategories.value.length > 0) params.category = selectedCategories.value[0];
+        
+        router.get(route('skills.browse'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    }, 300); // 300ms delay
+};
+
+const selectSuggestion = (suggestion) => {
+    search.value = suggestion.replace('Learn: ', '');
+    showSuggestions.value = false;
+    // Trigger search immediately without delay
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+    currentPage.value = 1;
+    
+    // Update URL with current filters
+    const params = {};
+    if (search.value) params.search = search.value;
+    if (selectedCategories.value.length > 0) params.category = selectedCategories.value[0];
+    
+    router.get(route('skills.browse'), params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    });
 };
 
 const applyFilters = () => {
-    currentPage.value = 1;
+    updateSearch();
+};
+
+const hideSuggestions = () => {
+    setTimeout(() => {
+        showSuggestions.value = false;
+    }, 200);
 };
 
 const filteredUsers = computed(() => {
@@ -380,16 +497,23 @@ const filteredUsers = computed(() => {
 
     // Search filter
     if (search.value) {
-        const searchLower = search.value.toLowerCase();
+        const searchLower = search.value.toLowerCase().trim();
         filtered = filtered.filter(user => {
-            const mainSkill = user.teaching_skills[0];
-            return user.name.toLowerCase().includes(searchLower) ||
-                user.surname?.toLowerCase().includes(searchLower) ||
-                mainSkill?.name.toLowerCase().includes(searchLower) ||
-                mainSkill?.description.toLowerCase().includes(searchLower) ||
-                user.learning_skills.some(skill => 
-                    skill.name.toLowerCase().includes(searchLower)
-                );
+            // Check user's name
+            if (user.name.toLowerCase().includes(searchLower)) return true;
+            
+            // Check all teaching skills
+            if (user.teaching_skills?.some(skill => 
+                skill.name.toLowerCase().includes(searchLower) ||
+                (skill.description && skill.description.toLowerCase().includes(searchLower))
+            )) return true;
+            
+            // Check all learning skills
+            if (user.learning_skills?.some(skill => 
+                skill.name.toLowerCase().includes(searchLower)
+            )) return true;
+            
+            return false;
         });
     }
 
@@ -404,9 +528,10 @@ const filteredUsers = computed(() => {
 
     // Rating filter
     if (selectedRatings.value.length > 0) {
-        filtered = filtered.filter(user =>
-            selectedRatings.value.some(rating => (user.average_rating || 0) >= rating)
-        );
+        filtered = filtered.filter(user => {
+            const userRating = user.rating || user.average_rating || 0;
+            return selectedRatings.value.some(rating => userRating >= rating);
+        });
     }
 
     // Exchange preferences filters

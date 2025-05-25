@@ -1,17 +1,17 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use App\Models\Message;
-use App\Models\Request as SkillRequest;
-use App\Models\User;
 use App\Events\MessageSent;
-use Illuminate\Http\Request;
+use App\Models\Message;
+use App\Models\SkillRequest;
+use App\Models\SwapRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Inertia\Response;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class MessageController extends Controller
 {
@@ -21,7 +21,7 @@ class MessageController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        
+
         $conversations = Message::where('user_id', $user->id)
             ->orWhere('recipient_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -31,19 +31,19 @@ class MessageController extends Controller
             })
             ->map(function ($messages) use ($user) {
                 $lastMessage = $messages->first();
-                $otherUser = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
-                
+                $otherUser   = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
+
                 return [
-                    'id' => $lastMessage->id,
-                    'user' => [
-                        'id' => $otherUser->id,
-                        'name' => $otherUser->name,
+                    'id'             => $lastMessage->id,
+                    'user'           => [
+                        'id'                => $otherUser->id,
+                        'name'              => $otherUser->name,
                         'profile_photo_url' => $otherUser->profile_photo_url,
                     ],
                     'skill_exchange' => $lastMessage->skill_exchange,
-                    'last_message' => $lastMessage->content,
-                    'time' => $lastMessage->created_at->diffForHumans(),
-                    'unread_count' => $messages->where('recipient_id', $user->id)->whereNull('read_at')->count(),
+                    'last_message'   => $lastMessage->content,
+                    'time'           => $lastMessage->created_at->diffForHumans(),
+                    'unread_count'   => $messages->where('recipient_id', $user->id)->whereNull('read_at')->count(),
                 ];
             })
             ->values();
@@ -59,42 +59,42 @@ class MessageController extends Controller
     public function show(User $user): Response
     {
         $currentUser = Auth::user();
-        
+
         $messages = Message::where(function ($query) use ($currentUser, $user) {
             $query->where(function ($q) use ($currentUser, $user) {
                 $q->where('user_id', $currentUser->id)
-                  ->where('recipient_id', $user->id);
+                    ->where('recipient_id', $user->id);
             })->orWhere(function ($q) use ($currentUser, $user) {
                 $q->where('user_id', $user->id)
-                  ->where('recipient_id', $currentUser->id);
+                    ->where('recipient_id', $currentUser->id);
             });
         })
-        ->orderBy('created_at')
-        ->get()
-        ->map(function ($message) use ($currentUser) {
-            return [
-                'id' => $message->id,
-                'content' => $message->content,
-                'time' => $message->created_at->format('g:i A'),
-                'date' => $message->created_at->toDateString(),
-                'is_mine' => $message->user_id === $currentUser->id,
-            ];
-        });
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($message) use ($currentUser) {
+                return [
+                    'id'      => $message->id,
+                    'content' => $message->content,
+                    'time'    => $message->created_at->format('g:i A'),
+                    'date'    => $message->created_at->toDateString(),
+                    'is_mine' => $message->user_id === $currentUser->id,
+                ];
+            });
 
         // Get the skill exchange context if it exists
         $skillExchange = null;
-        $request = SkillRequest::where(function ($query) use ($currentUser, $user) {
+        $request       = SkillRequest::where(function ($query) use ($currentUser, $user) {
             $query->where(function ($q) use ($currentUser, $user) {
                 $q->where('sender_id', $currentUser->id)
-                  ->where('receiver_id', $user->id);
+                    ->where('recipient_id', $user->id);
             })->orWhere(function ($q) use ($currentUser, $user) {
                 $q->where('sender_id', $user->id)
-                  ->where('receiver_id', $currentUser->id);
+                    ->where('recipient_id', $currentUser->id);
             });
         })
-        ->where('status', 'accepted')
-        ->with('skill')
-        ->first();
+            ->where('status', 'accepted')
+            ->with('skill')
+            ->first();
 
         if ($request) {
             $skillExchange = "Skill Exchange: {$request->skill->name}";
@@ -107,20 +107,20 @@ class MessageController extends Controller
             ->update(['read_at' => now()]);
 
         return Inertia::render('Messages/Show', [
-            'otherUser' => [
-                'id' => $user->id,
-                'name' => $user->name,
+            'otherUser'     => [
+                'id'                => $user->id,
+                'name'              => $user->name,
                 'profile_photo_url' => $user->profile_photo_url,
             ],
-            'messages' => $messages,
+            'messages'      => $messages,
             'skillExchange' => $skillExchange,
-            'requestId' => $request ? $request->id : null,
-            'auth' => [
+            'requestId'     => $request ? $request->id : null,
+            'auth'          => [
                 'user' => [
-                    'id' => $currentUser->id,
+                    'id'   => $currentUser->id,
                     'name' => $currentUser->name,
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 
@@ -130,37 +130,107 @@ class MessageController extends Controller
     public function store(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'content' => ['required', 'string'],
+            'content'        => ['required', 'string'],
             'skill_exchange' => ['nullable', 'string'],
         ]);
 
         $currentUser = Auth::user();
-        
+
         $message = Message::create([
-            'user_id' => $currentUser->id,
-            'recipient_id' => $user->id,
-            'content' => $validated['content'],
+            'user_id'        => $currentUser->id,
+            'recipient_id'   => $user->id,
+            'content'        => $validated['content'],
             'skill_exchange' => $validated['skill_exchange'] ?? null,
         ]);
 
         // Broadcast the message
         try {
             Log::info('Broadcasting message to channel chat.' . $user->id, [
-                'message' => $message->toArray(),
-                'sender_id' => $currentUser->id,
-                'recipient_id' => $user->id
+                'message'      => $message->toArray(),
+                'sender_id'    => $currentUser->id,
+                'recipient_id' => $user->id,
             ]);
-            
+
             broadcast(new MessageSent($message))->toOthers();
-            
+
             Log::info('Message broadcast completed');
         } catch (\Exception $e) {
             Log::error('Broadcasting failed: ' . $e->getMessage(), [
                 'exception' => $e,
-                'message' => $message->toArray()
+                'message'   => $message->toArray(),
             ]);
         }
 
         return back();
+    }
+
+    // Add this method to your MessageController
+    public function conversations()
+    {
+        try {
+            $user = Auth::user();
+
+            $conversations = Message::where('user_id', $user->id)
+                ->orWhere('recipient_id', $user->id)
+                ->with(['user', 'recipient'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function ($message) use ($user) {
+                    return $message->user_id === $user->id ? $message->recipient_id : $message->user_id;
+                })
+                ->map(function ($messages) use ($user) {
+                    $lastMessage = $messages->first();
+                    $otherUser   = $lastMessage->user_id === $user->id ? $lastMessage->recipient : $lastMessage->user;
+
+                // Get the skill exchange context from the associated swap request if it exists
+                $swapRequest = SwapRequest::where(function ($query) use ($user, $otherUser) {
+                    $query->where('user_id', $user->id)
+                        ->where('recipient_id', $otherUser->id);
+                })
+                    ->orWhere(function ($query) use ($user, $otherUser) {
+                        $query->where('user_id', $otherUser->id)
+                            ->where('recipient_id', $user->id);
+                    })
+                    ->where('status', 'Accepted')
+                    ->first();
+
+                // Get the skill names based on who is the sender
+                $skillWanted = '';
+                $skillOffered = '';
+                if ($swapRequest) {
+                    if ($swapRequest->user_id === $user->id) {
+                        $skillWanted = $swapRequest->skill_wanted;
+                        $skillOffered = $swapRequest->skill_offered;
+                    } else {
+                        $skillWanted = $swapRequest->skill_offered;
+                        $skillOffered = $swapRequest->skill_wanted;
+                    }
+                }
+
+                return [
+                    'id'            => $lastMessage->id,
+                    'other_user'    => [
+                        'id'   => $otherUser->id,
+                        'name' => $otherUser->name,
+                    ],
+                    'skill_offered' => $skillOffered,
+                    'skill_wanted'  => $skillWanted,
+                    'last_message'  => [
+                        'content'    => $lastMessage->content,
+                        'created_at' => $lastMessage->created_at,
+                    ],
+                ];
+            })
+            ->values()
+            ->toArray();
+
+            return response()->json($conversations);
+        } catch (\Exception $e) {
+            \Log::error('Error in conversations method: ' . $e->getMessage(), [
+                'exception' => $e,
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['error' => 'An error occurred while fetching conversations'], 500);
+        }
     }
 }

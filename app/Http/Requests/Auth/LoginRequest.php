@@ -57,15 +57,25 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('email', 'password');
+        
+        // First check if user exists with this email
+        $user = \App\Models\User::where('email', $this->email)->first();
+        
+        if (!$user) {
             RateLimiter::hit($this->throttleKey());
-
             throw ValidationException::withMessages([
-                'email' => 'Invalid email or password.',
-                'password' => 'Invalid email or password.'
+                'email' => 'The provided email does not exist.',
             ]);
         }
-
+        
+        // Try to authenticate
+        if (!Auth::attempt($credentials, $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'password' => 'The provided password is incorrect.',
+            ]);
+        }
         RateLimiter::clear($this->throttleKey());
     }
 

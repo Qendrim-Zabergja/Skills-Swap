@@ -20,6 +20,9 @@
             <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
               {{ status }}
             </div>
+            <div v-if="errors.authentication" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+              {{ errors.authentication }}
+            </div>
 
             <!-- Email -->
             <div class="mb-4">
@@ -122,6 +125,7 @@
 import { defineComponent, ref } from 'vue';
 import { Head, Link } from '@inertiajs/inertia-vue3';
 import { useForm } from '@inertiajs/inertia-vue3';
+import axios from 'axios';
 
 export default defineComponent({
   components: {
@@ -190,26 +194,44 @@ export default defineComponent({
         remember: form.remember
       };
 
-      form.post(route('login'), {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          window.location.href = route('home');
-        },
-        onError: (serverErrors) => {
-          // Set server errors
-          if (serverErrors.email) {
-            errors.value.email = serverErrors.email;
+      // Use axios directly to have more control over the response
+      axios.post(route('login'), {
+        email: form.email,
+        password: form.password,
+        remember: form.remember
+      })
+      .then(response => {
+        // On successful login, redirect to home
+        window.location.href = route('home');
+      })
+      .catch(error => {
+        // Reset all errors
+        errors.value = {};
+        
+        if (error.response) {
+          const responseErrors = error.response.data.errors;
+          
+          // Handle server validation errors
+          if (responseErrors.email) {
+            errors.value.email = Array.isArray(responseErrors.email) ? responseErrors.email[0] : responseErrors.email;
           }
-          if (serverErrors.password) {
-            errors.value.password = serverErrors.password;
+          if (responseErrors.password) {
+            errors.value.password = Array.isArray(responseErrors.password) ? responseErrors.password[0] : responseErrors.password;
           }
-
-          // Restore form data
-          form.email = formData.email;
-          form.password = formData.password;
-          form.remember = formData.remember;
+          
+          // If no specific field errors, show generic auth error
+          if (Object.keys(errors.value).length === 0) {
+            errors.value.authentication = 'These credentials do not match our records.';
+          }
+        } else {
+          // Network error or other issues
+          errors.value.authentication = 'An error occurred. Please try again.';
         }
+
+        // Restore form data
+        form.email = formData.email;
+        form.password = ''; // Clear password for security
+        form.remember = formData.remember;
       });
     };
 

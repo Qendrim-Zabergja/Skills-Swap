@@ -96,7 +96,7 @@
                 <label class="flex items-center">
                   <input 
                     type="checkbox"
-                    v-model="lookingForMySkills"
+                    v-model="lookingForMySkills" 
                     class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   >
                   <span class="ml-2 text-sm text-gray-600">Looking for my skills</span>
@@ -356,8 +356,39 @@ const applyFilters = () => {
 };
 
 const requestSwap = (userId) => {
-  window.Inertia.post(`/requests/${userId}`, {}, {
-    preserveScroll: true
+  // Get the user's teaching skills to show in the form
+  const user = props.auth.user;
+  const recipient = props.skills.find(skill => skill.id === userId);
+  
+  if (!recipient) return;
+  
+  // Show a simple prompt to get the message
+  const message = prompt('Enter your message for the swap request:');
+  if (!message) return;
+  
+  // Get the first teaching skill of the recipient that the user wants to learn
+  const skillWanted = recipient.teaching_skills[0]?.name || 'a skill';
+  
+  // Get the first teaching skill of the current user to offer
+  const skillOffered = user.teaching_skills?.[0]?.name || 'a skill';
+  
+  // Send the request
+  window.Inertia.post(route('requests.store'), {
+    recipient_id: userId,
+    skill_wanted: skillWanted,
+    skill_offered: skillOffered,
+    message: message,
+    availability: 'Flexible',
+    duration: 60
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      alert('Request sent successfully!');
+    },
+    onError: (errors) => {
+      console.error('Error sending request:', errors);
+      alert('Failed to send request. Please try again.');
+    }
   });
 };
 

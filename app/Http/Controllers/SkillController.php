@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Skill;
@@ -12,36 +11,36 @@ class SkillController extends Controller
     public function index()
     {
         $skills = Skill::with('user')->latest()->get();
-        
+
         return Inertia::render('Skills/Index', [
-            'skills' => $skills
+            'skills' => $skills,
         ]);
     }
 
     public function featured()
     {
         $featuredSkills = Skill::with('user')->inRandomOrder()->take(3)->get();
-        
+
         return response()->json($featuredSkills);
     }
 
     public function show(Skill $skill)
     {
         $skill->load('user');
-        
+
         return Inertia::render('Skills/Show', [
-            'skill' => $skill
+            'skill' => $skill,
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'teachingSkills' => 'array',
-            'teachingSkills.*.name' => 'required|string|max:255',
+            'teachingSkills'               => 'array',
+            'teachingSkills.*.name'        => 'required|string|max:255',
             'teachingSkills.*.description' => 'required|string',
-            'learningSkills' => 'array',
-            'learningSkills.*.name' => 'required|string|max:255',
+            'learningSkills'               => 'array',
+            'learningSkills.*.name'        => 'required|string|max:255',
             'learningSkills.*.description' => 'nullable|string',
         ]);
 
@@ -51,112 +50,119 @@ class SkillController extends Controller
         // Store teaching skills
         foreach ($request->teachingSkills as $skill) {
             $request->user()->skills()->create([
-                'name' => $skill['name'],
+                'name'        => $skill['name'],
                 'description' => $skill['description'],
-                'type' => 'teach'
+                'type'        => 'teach',
             ]);
         }
 
         // Store learning skills
         foreach ($request->learningSkills as $skill) {
             $request->user()->skills()->create([
-                'name' => $skill['name'],
+                'name'        => $skill['name'],
                 'description' => $skill['description'] ?? '',
-                'type' => 'learn'
+                'type'        => 'learn',
             ]);
         }
-        
+
         return redirect()->route('profile.edit')->with('success', 'Skills updated successfully.');
     }
 
     public function update(Request $request, Skill $skill)
     {
         // $this->authorize('update', $skill);
-        
+
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
             'description' => 'required|string',
-            'type' => 'required|in:teach,learn'
+            'type'        => 'required|in:teach,learn',
         ]);
 
         $skill->update($request->all());
-        
+
         return redirect()->route('profile.edit')->with('success', 'Skill updated successfully.');
     }
 
     public function destroy(Skill $skill)
     {
         // $this->authorize('delete', $skill);
-        
+
         $skill->delete();
-        
+
         return redirect()->route('profile.edit')->with('success', 'Skill deleted successfully.');
     }
 
     public function browse()
     {
-        $users = User::with(['skills' => function($q) {
-            $q->select('id', 'user_id', 'name', 'description', 'type', 'category');
-        }])->get()
-        ->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'surname' => $user->surname,
-                'profile_photo' => $user->profile_photo_url ?? asset('images/default-avatar.png'),
-                'location' => $user->location ?? 'Location not specified',
-                'rating' => 5, // Placeholder until we implement ratings
-                'swaps_completed' => $user->skills->count(),
-                'teaching_skills' => $user->skills->where('type', 'teach')
-                    ->map(function($skill) {
-                        return [
-                            'id' => $skill->id,
-                            'name' => $skill->name,
-                            'description' => $skill->description,
-                            'category' => $skill->category
-                        ];
-                    })->values(),
-                'learning_skills' => $user->skills->where('type', 'learn')
-                    ->map(function($skill) {
-                        return [
-                            'id' => $skill->id,
-                            'name' => $skill->name,
-                            'description' => $skill->description,
-                            'category' => $skill->category
-                        ];
-                    })->values(),
-                'created_at' => $user->created_at
-            ];
-        });
+        $users = User::with([
+            'skills' => function ($q) {
+                $q->select('id', 'user_id', 'name', 'description', 'type', 'category');
+            },
+            'receivedRatings' => function ($q) {
+                $q->select('rated_user_id', 'score');
+            }
+        ])->get()
+            ->map(function ($user) {
+                return [
+                    'id'              => $user->id,
+                    'name'            => $user->name,
+                    'surname'         => $user->surname,
+                    'profile_photo'   => $user->profile_photo_url ?? asset('images/default-avatar.png'),
+                    'location'        => $user->location ?? 'Location not specified',
+                    'rating'          => $user->receivedRatings->avg('score') ?? 0,
+                    'total_ratings'   => $user->receivedRatings->count(),
+                    'swaps_completed' => $user->skills->count(),
+                    'teaching_skills' => $user->skills->where('type', 'teach')
+                        ->map(function ($skill) {
+                            return [
+                                'id'          => $skill->id,
+                                'name'        => $skill->name,
+                                'description' => $skill->description,
+                                'category'    => $skill->category,
+                            ];
+                        })->values(),
+                    'learning_skills' => $user->skills->where('type', 'learn')
+                        ->map(function ($skill) {
+                            return [
+                                'id'          => $skill->id,
+                                'name'        => $skill->name,
+                                'description' => $skill->description,
+                                'category'    => $skill->category,
+                            ];
+                        })->values(),
+                    'created_at'      => $user->created_at,
+                ];
+            });
 
         $authUser = auth()->user()->load('skills');
 
         return Inertia::render('Skills/Browse', [
             'users' => $users,
-            'auth' => [
+            'auth'  => [
                 'user' => [
-                    'id' => $authUser->id,
-                    'name' => $authUser->name,
-                    'teaching_skills' => $authUser->skills->where('type', 'teach')
-                        ->map(function($skill) {
+                    'id'                => $authUser->id,
+                    'name'              => $authUser->name,
+                    'profile_photo_url' => $authUser->profile_photo_url,
+                    'teaching_skills'   => $authUser->skills->where('type', 'teach')
+                        ->map(function ($skill) {
                             return [
-                                'id' => $skill->id,
-                                'name' => $skill->name,
+                                'id'          => $skill->id,
+                                'name'        => $skill->name,
                                 'description' => $skill->description,
-                                'category' => $skill->category
+                                'category'    => $skill->category,
                             ];
                         })->values(),
-                    'learning_skills' => $authUser->skills->where('type', 'learn')
-                        ->map(function($skill) {
+                    'learning_skills'   => $authUser->skills->where('type', 'learn')
+                        ->map(function ($skill) {
                             return [
-                                'id' => $skill->id,
-                                'name' => $skill->name,
+                                'id'          => $skill->id,
+                                'name'        => $skill->name,
                                 'description' => $skill->description,
-                                'category' => $skill->category
+                                'category'    => $skill->category,
                             ];
                         })->values(),
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 
@@ -167,9 +173,9 @@ class SkillController extends Controller
         // Apply search filter
         if ($request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -178,16 +184,16 @@ class SkillController extends Controller
             ->paginate(10)
             ->through(function ($skill) {
                 return [
-                    'id' => $skill->id,
-                    'name' => $skill->name,
+                    'id'          => $skill->id,
+                    'name'        => $skill->name,
                     'description' => $skill->description,
-                    'type' => $skill->type,
-                    'rating' => 4.5, // Placeholder until we implement ratings
-                    'user' => [
-                        'id' => $skill->user->id,
-                        'name' => $skill->user->name,
-                        'profile_photo_url' => $skill->user->profile_photo_url
-                    ]
+                    'type'        => $skill->type,
+                    'rating'      => 4.5, // Placeholder until we implement ratings
+                    'user'        => [
+                        'id'                => $skill->user->id,
+                        'name'              => $skill->user->name,
+                        'profile_photo_url' => $skill->user->profile_photo_url,
+                    ],
                 ];
             });
 

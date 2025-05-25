@@ -1,5 +1,4 @@
 <template>
-
     <Head title="Welcome" />
 
     <div class="min-h-screen bg-white">
@@ -14,69 +13,142 @@
                     <p class="text-gray-600 mb-10">Exchange your expertise with others. No money involved - just knowledge sharing.</p>
                     
                     <!-- Search Section -->
-                    <div class="max-w-xl mx-auto flex items-center gap-2">
-                        <div class="flex-1 relative">
-                            <input 
-                                type="text" 
-                                v-model="searchQuery" 
-                                placeholder="Search skills (e.g., Graphic Design)" 
-                                class="w-full px-4 py-2 rounded border border-gray-200 focus:outline-none focus:border-gray-300 bg-white"
-                            />
+                    <div class="max-w-xl mx-auto">
+                        <div class="flex items-center gap-2 relative">
+                            <div class="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    v-model="searchQuery" 
+                                    @input="updateSearch"
+                                    @focus="showSuggestions = searchQuery.length > 0"
+                                    @blur="hideSuggestions"
+                                    @keyup.enter="searchSkills"
+                                    placeholder="Search skills (e.g., Graphic Design)" 
+                                    class="w-full px-4 py-2 rounded border border-gray-200 focus:outline-none focus:border-gray-300 bg-white"
+                                    autocomplete="off"
+                                />
+                                
+                                <!-- Suggestions Dropdown -->
+                                <div 
+                                    v-if="showSuggestions && searchSuggestions.length > 0"
+                                    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                                >
+                                    <div 
+                                        v-for="(suggestion, index) in searchSuggestions" 
+                                        :key="index"
+                                        @mousedown="selectSuggestion(suggestion)"
+                                        class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    >
+                                        {{ suggestion }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                @click="searchSkills" 
+                                class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 whitespace-nowrap"
+                            >
+                                Find Skills
+                            </button>
                         </div>
-                        <button 
-                            @click="searchSkills" 
-                            class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 whitespace-nowrap"
-                        >
-                            Find Skills
-                        </button>
                     </div>
                 </div>
             </section>
 
-            <!-- Featured Skills Section -->
+            <!-- Featured Users Section -->
             <section class="py-8 px-4 max-w-6xl mx-auto">
-                <h2 class="text-xl font-semibold mb-8">Featured Skill Offers</h2>
+                <h2 class="text-xl font-semibold mb-8">Featured Skill Swappers</h2>
                 
-                <div v-if="featuredSkills.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                    <div v-for="skill in featuredSkills" :key="skill.id" class="bg-white rounded-lg p-6 border border-gray-100">
-                        <!-- User Info -->
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                                <img v-if="skill.user.profile_image" :src="'/storage/' + skill.user.profile_image"
-                                    class="w-full h-full object-cover" :alt="skill.user.first_name">
-                                <span v-else class="text-gray-500 text-sm">{{ getInitials(skill.user.first_name,
-                                    skill.user.last_name) }}</span>
+                <div v-if="featuredUsers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                    <div v-for="user in featuredUsers" :key="user.id" class="bg-white rounded-lg p-6 border border-gray-100">
+                        <!-- User Info Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+                                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                                        <img 
+                                            v-if="user.profile_photo_url && !imageLoadErrors.has(user.id)" 
+                                            :src="user.profile_photo_url"
+                                            :alt="user.name" 
+                                            class="w-full h-full object-cover" 
+                                            @error="handleImageError(user.id)"
+                                        />
+                                        <span v-else class="text-gray-500 text-sm">
+                                            {{ getInitials(user.name) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">{{ user.name }}</h3>
+                                    <p class="text-sm text-gray-500">{{ user.location || 'Location not specified' }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm text-gray-500">{{ skill.user.first_name }} {{ skill.user.last_name }}</p>
-                                <p class="text-gray-400 text-xs">{{ skill.user.location }}</p>
+                            <div class="flex items-center">
+                                <div class="flex text-yellow-400">
+                                    <span v-for="i in Math.min(5, Math.floor(user.rating || 0))" :key="i" class="text-sm">★</span>
+                                    <span v-if="user.rating % 1 > 0.3 && user.rating % 1 < 0.8" class="text-sm">½</span>
+                                    <span v-for="i in (5 - Math.ceil(user.rating || 0))" :key="i+5" class="text-gray-300 text-sm">★</span>
+                                </div>
+                                <span class="ml-1 text-gray-600 text-sm">{{ user.rating ? user.rating.toFixed(1) : 'New' }}</span>
                             </div>
                         </div>
 
-                        <!-- Skill Info -->
-                        <h3 class="font-semibold text-lg mb-2">{{ skill.title }}</h3>
-                        <p class="text-sm text-gray-600 mb-4">{{ truncate(skill.description, 120) }}</p>
-
-                        <!-- Tags and Action -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span v-for="tag in skill.looking_for" :key="tag" class="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded">
-                                Looking for: {{ tag }}
-                            </span>
+                        <!-- Teaching Skills -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Can teach:</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span 
+                                    v-for="skill in user.teaching_skills.slice(0, 2)" 
+                                    :key="skill.id"
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                >
+                                    {{ skill.name }}
+                                </span>
+                                <span v-if="user.teaching_skills.length > 2" class="text-xs text-gray-500">
+                                    +{{ user.teaching_skills.length - 2 }} more
+                                </span>
+                                <span v-if="user.teaching_skills.length === 0" class="text-xs text-gray-500">
+                                    No teaching skills listed
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-1">
-                                <span class="text-yellow-400">★</span>
-                                <span class="text-sm">{{ skill.rating }} • {{ skill.reviews }} swaps</span>
+                        <!-- Learning Skills -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Looking to learn:</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span 
+                                    v-for="skill in user.learning_skills.slice(0, 2)" 
+                                    :key="skill.id"
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                >
+                                    {{ skill.name }}
+                                </span>
+                                <span v-if="user.learning_skills.length > 2" class="text-xs text-gray-500">
+                                    +{{ user.learning_skills.length - 2 }} more
+                                </span>
+                                <span v-if="user.learning_skills.length === 0" class="text-xs text-gray-500">
+                                    No learning skills listed
+                                </span>
                             </div>
-                            <Link :href="route('skills.show', skill.id)"
-                                class="bg-black text-white text-sm px-4 py-2 rounded hover:bg-gray-800">Request Swap</Link>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+                            <div class="text-xs text-gray-500">
+                                {{ user.swaps_completed || 0 }} swaps completed
+                            </div>
+                            <button 
+                                @click="requestSwap(user.id)"
+                                class="bg-black text-white text-sm px-4 py-2 rounded hover:bg-gray-800"
+                            >
+                                Request Swap
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div v-else class="text-center py-10 bg-gray-50 rounded-lg mb-8">
-                    <p class="text-gray-500">No skills available yet. Be the first to share your expertise!</p>
+                    <p class="text-gray-500">No featured users available yet. Be the first to share your expertise!</p>
                     <Link v-if="$page.props.auth.user" :href="route('profile.edit')"
                         class="bg-black text-white px-4 py-2 rounded mt-4 inline-block">Add Your Skills</Link>
                     <Link v-else :href="route('register')"
@@ -135,7 +207,7 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import { Link } from '@inertiajs/vue3';
 import Navbar from '../Components/Navbar.vue';
@@ -150,74 +222,127 @@ export default defineComponent({
     props: {
         canLogin: Boolean,
         canRegister: Boolean,
+        featuredUsers: {
+            type: Array,
+            default: () => []
+        },
+        auth: {
+            type: Object,
+            default: () => ({})
+        }
+    },
+
+    setup() {
+        const imageLoadErrors = ref(new Set());
+        return { imageLoadErrors };
     },
 
     data() {
         return {
-            searchQuery: '',
-            featuredSkills: [
-                {
-                    id: 1,
-                    title: 'Graphic Design & Brand Identity',
-                    description: 'I can teach you how to create stunning logos, brand identities, and marketing materials using Adobe Creative Suite.',
-                    user: {
-                        first_name: 'Alex',
-                        last_name: 'Morgan',
-                        profile_image: null,
-                        location: 'New York, USA'
-                    },
-                    looking_for: ['Web Development', 'Digital Marketing'],
-                    rating: 4.8,
-                    reviews: 24
-                },
-                {
-                    id: 2,
-                    title: 'Full-Stack Web Development',
-                    description: 'Learn how to build responsive websites and web applications using React, Node.js, and modern web technologies.',
-                    user: {
-                        first_name: 'Sarah',
-                        last_name: 'Chen',
-                        profile_image: null,
-                        location: 'San Francisco, USA'
-                    },
-                    looking_for: ['Photography', 'UX/UI Design'],
-                    rating: 4.9,
-                    reviews: 18
-                },
-                {
-                    id: 3,
-                    title: 'Guitar Lessons for Beginners',
-                    description: 'I\'ll teach you to play guitar from scratch - chords, strumming patterns, and your favorite songs in just a few sessions.',
-                    user: {
-                        first_name: 'Miguel',
-                        last_name: 'Rodriguez',
-                        profile_image: null,
-                        location: 'Los Angeles, USA'
-                    },
-                    looking_for: ['Language (English)', 'Cooking'],
-                    rating: 4.7,
-                    reviews: 31
-                }
-            ]
+            searchQuery: ''
         }
     },
 
-    mounted() {
-        // Comment out the fetchFeaturedSkills call for now since we're using static data
-        // this.fetchFeaturedSkills();
-    },
-
     methods: {
-        getInitials(firstName, lastName) {
-            firstName = firstName || '';
-            lastName = lastName || '';
-            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        updateSearch() {
+            // Clear any existing timeout
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+            
+            // Show suggestions if there's text
+            this.showSuggestions = this.searchQuery.length > 0;
+            
+            if (!this.showSuggestions) {
+                this.searchSuggestions = [];
+                return;
+            }
+            
+            // Generate suggestions from featured users
+            const searchLower = this.searchQuery.toLowerCase();
+            const suggestions = new Set();
+            
+            // Add user names
+            this.featuredUsers.forEach(user => {
+                if (user.name.toLowerCase().includes(searchLower)) {
+                    suggestions.add(user.name);
+                }
+            });
+            
+            // Add skill names
+            this.featuredUsers.forEach(user => {
+                user.teaching_skills?.forEach(skill => {
+                    if (skill.name.toLowerCase().includes(searchLower)) {
+                        suggestions.add(skill.name);
+                    }
+                });
+                user.learning_skills?.forEach(skill => {
+                    if (skill.name.toLowerCase().includes(searchLower)) {
+                        suggestions.add(`Learn: ${skill.name}`);
+                    }
+                });
+            });
+            
+            this.searchSuggestions = Array.from(suggestions).slice(0, 5); // Show top 5 suggestions
+        },
+        
+        selectSuggestion(suggestion) {
+            this.searchQuery = suggestion.replace('Learn: ', '');
+            this.showSuggestions = false;
+            this.searchSkills();
+        },
+        
+        getInitials(name) {
+            if (!name) return '';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase();
         },
 
-        truncate(text, length) {
-            if (!text) return '';
-            if (text.length <= length) return text;
-            return text.substring(0, length) + '...';
+        handleImageError(userId) {
+            console.log('Image error for user:', userId);
+            this.imageLoadErrors.add(userId);
+        },
+
+        hideSuggestions() {
+            setTimeout(() => {
+                this.showSuggestions = false;
+            }, 200);
+        },
+
+        requestSwap(userId) {
+            // Get the user's teaching skills to show in the form
+            const user = this.$page.props.auth.user;
+            const recipient = this.featuredUsers.find(u => u.id === userId);
+            
+            if (!recipient) return;
+            
+            // Show a simple prompt to get the message
+            const message = prompt('Enter your message for the swap request:');
+            if (!message) return;
+            
+            // Get the first teaching skill of the recipient that the user wants to learn
+            const skillWanted = recipient.teaching_skills[0]?.name || 'a skill';
+            
+            // Get the first teaching skill of the current user to offer
+            const skillOffered = user.teaching_skills?.[0]?.name || 'a skill';
+            
+            // Send the request
+            this.$inertia.post(route('requests.store'), {
+                recipient_id: userId,
+                skill_wanted: skillWanted,
+                skill_offered: skillOffered,
+                message: message,
+                availability: 'Flexible',
+                duration: 60
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert('Request sent successfully!');
+                },
+                onError: (errors) => {
+                    console.error('Error sending request:', errors);
+                    alert('Failed to send request. Please try again.');
+                }
+            });
         },
 
         searchSkills() {
