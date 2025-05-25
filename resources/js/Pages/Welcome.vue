@@ -197,9 +197,9 @@
                 <div> 2025 SkillSwap. All rights reserved.</div>
                 <div class="flex space-x-4">
                     <Link :href="route('about')" class="hover:underline">About</Link>
-                    <a href="#" class="hover:underline">Terms</a>
-                    <a href="#" class="hover:underline">Privacy</a>
-                    <a href="#" class="hover:underline">Contact</a>
+                    <Link :href="route('terms')" class="hover:underline">Terms</Link>
+                    <Link :href="route('privacy')" class="hover:underline">Privacy</Link>
+                    <Link :href="route('contact')" class="hover:underline">Contact</Link>
                 </div>
             </div>
         </footer>
