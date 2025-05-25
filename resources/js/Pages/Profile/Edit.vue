@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50" data-v-app>
+  <div class="min-h-screen bg-gray-50 flex flex-col" data-v-app>
     <Navbar />
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -387,6 +387,19 @@
         </template>
       </Modal>
     </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-100 py-3 text-xs text-gray-500 mt-auto">
+      <div class="container mx-auto px-4 flex justify-between items-center">
+        <div> 2025 SkillSwap. All rights reserved.</div>
+        <div class="flex space-x-4">
+          <Link :href="route('about')" class="hover:underline">About</Link>
+          <Link :href="route('terms')" class="hover:underline">Terms</Link>
+          <Link :href="route('privacy')" class="hover:underline">Privacy</Link>
+          <Link :href="route('contact')" class="hover:underline">Contact</Link>
+        </div>
+      </div>
+    </footer>
   </div>
   <!-- Rating Modal -->
   <Modal :show="showRatingModal" @close="closeRatingModal">

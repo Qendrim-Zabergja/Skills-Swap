@@ -326,11 +326,24 @@
         :recipient="selectedUser" 
         @close="showRequestModal = false"
     />
+    
+    <!-- Footer -->
+    <footer class="bg-gray-100 py-3 text-xs text-gray-500 mt-10">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div> 2025 SkillSwap. All rights reserved.</div>
+            <div class="flex space-x-4">
+                <Link :href="route('about')" class="hover:underline">About</Link>
+                <Link :href="route('terms')" class="hover:underline">Terms</Link>
+                <Link :href="route('privacy')" class="hover:underline">Privacy</Link>
+                <Link :href="route('contact')" class="hover:underline">Contact</Link>
+            </div>
+        </div>
+    </footer>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { router, usePage, Link } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import SkillExchangeModal from '@/Components/SkillExchangeModal.vue';
 
