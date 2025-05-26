@@ -133,14 +133,11 @@
                         </div>
 
                         <!-- Footer -->
-                        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between mt-6">
                             <div class="text-xs text-gray-500">
-                                {{ user.swaps_completed || 0 }} swaps completed
+                                Member since {{ new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
                             </div>
-                            <button 
-                                @click="requestSwap(user.id)"
-                                class="bg-black text-white text-sm px-4 py-2 rounded hover:bg-gray-800"
-                            >
+                            <button @click="openRequestModal(user)" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800">
                                 Request Swap
                             </button>
                         </div>
@@ -204,6 +201,13 @@
             </div>
         </footer>
     </div>
+    <!-- Swap Request Modal -->
+    <SkillExchangeModal 
+        :show="showRequestModal"
+        :user="$page.props.auth.user"
+        :recipient="selectedUser"
+        @close="showRequestModal = false"
+    />
 </template>
 
 <script>
@@ -211,12 +215,14 @@ import { defineComponent, ref } from 'vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import { Link } from '@inertiajs/vue3';
 import Navbar from '../Components/Navbar.vue';
+import SkillExchangeModal from '../Components/SkillExchangeModal.vue';
 
 export default defineComponent({
     components: {
         Head,
         Link,
         Navbar,
+        SkillExchangeModal
     },
 
     props: {
@@ -239,11 +245,19 @@ export default defineComponent({
 
     data() {
         return {
-            searchQuery: ''
+            searchQuery: '',
+            showSuggestions: false,
+            searchSuggestions: [],
+            showRequestModal: false,
+            selectedUser: null,
         }
     },
 
     methods: {
+        openRequestModal(user) {
+            this.selectedUser = user;
+            this.showRequestModal = true;
+        },
         updateSearch() {
             // Clear any existing timeout
             if (this.searchTimeout) {

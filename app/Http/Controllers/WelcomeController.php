@@ -43,13 +43,21 @@ class WelcomeController extends Controller
                             'category' => $skill->category,
                         ];
                     }),
+                    'created_at' => $user->created_at,
                 ];
             });
 
+        // Eager load the current user's skills
+        $user = auth()->user();
+        if ($user) {
+            $user->load(['teachingSkills', 'learningSkills']);
+        }
+
         return Inertia::render('Welcome', [
             'featuredUsers' => $featuredUsers,
-            'canLogin' => \Route::has('login'),
-            'canRegister' => \Route::has('register'),
+            'auth' => [
+                'user' => $user
+            ]
         ]);
     }
 }
