@@ -32,12 +32,13 @@ class RatingController extends Controller
                 : $swapRequest->user_id;
 
             $existingRating = Rating::where([
+                'request_id'    => $swapRequest->id,
                 'rater_id'      => $userId,
                 'rated_user_id' => $ratedUserId,
             ])->first();
 
             if ($existingRating) {
-                return back()->with('error', 'You have already rated this user.');
+                return back()->with('error', 'You have already rated this user for this swap.');
             }
 
             $rating = Rating::create([

@@ -24,25 +24,27 @@ class ProfileController extends Controller
         $teachingSkills = $user->skills()->where('type', 'teach')->get();
         $learningSkills = $user->skills()->where('type', 'learn')->get();
 
-        $incomingRequests = SwapRequest::with(['user', 'rating'])
+        $incomingRequests = SwapRequest::with(['user', 'ratings'])
             ->where('recipient_id', $user->id)
             ->whereIn('status', ['Pending', 'Accepted'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($request) {
-                $request->rated = $request->rating !== null;
+            ->map(function ($request) use ($user) {
+                // Mark as rated if the current user has rated this request
+                $request->rated = $request->ratings->where('rater_id', $user->id)->isNotEmpty();
                 return $request;
             });
 
-        $outgoingRequests = SwapRequest::with(['recipient', 'rating'])
+        $outgoingRequests = SwapRequest::with(['recipient', 'ratings'])
             ->where('user_id', $user->id)
             ->whereIn('status', ['Pending', 'Accepted', 'Declined', 'Cancelled'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($request) {
-                $request->rated = $request->rating !== null;
-                return $request;
-            });
+            ->map(function ($request) use ($user) {
+    // Mark as rated if the current user has rated this request
+    $request->rated = $request->ratings->where('rater_id', $user->id)->isNotEmpty();
+    return $request;
+});
 
         return Inertia::render('Profile/Edit', [
             'user'             => array_merge($user->toArray(), [

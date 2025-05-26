@@ -25,10 +25,16 @@ class SwapRequestController extends Controller
                 ->latest()
                 ->get()
                 ->map(function ($request) use ($user) {
-                    $rated = $request->ratings()
-                        ->where('rater_id', $user->id)
-                        ->exists();
-                    
+                    $ratings = $request->ratings->map(function ($rating) {
+                        return [
+                            'id' => $rating->id,
+                            'rater_id' => $rating->rater_id,
+                            'rated_user_id' => $rating->rated_user_id,
+                            'score' => $rating->score,
+                            'comment' => $rating->comment,
+                        ];
+                    });
+                    $rated = $ratings->where('rater_id', $user->id)->isNotEmpty();
                     return [
                         'id' => $request->id,
                         'user' => [
@@ -41,14 +47,25 @@ class SwapRequestController extends Controller
                         'message' => $request->message,
                         'status' => $request->status,
                         'created_at' => $request->created_at,
+                        'ratings' => $ratings,
                         'rated' => $rated,
                     ];
                 }),
             'outgoingRequests' => $user->sentRequests()
-                ->with(['recipient', 'skill', 'rating'])
+                ->with(['recipient', 'skill', 'ratings'])
                 ->latest()
                 ->get()
-                ->map(function ($request) {
+                ->map(function ($request) use ($user) {
+                    $ratings = $request->ratings->map(function ($rating) {
+                        return [
+                            'id' => $rating->id,
+                            'rater_id' => $rating->rater_id,
+                            'rated_user_id' => $rating->rated_user_id,
+                            'score' => $rating->score,
+                            'comment' => $rating->comment,
+                        ];
+                    });
+                    $rated = $ratings->where('rater_id', $user->id)->isNotEmpty();
                     return [
                         'id' => $request->id,
                         'recipient' => [
@@ -61,6 +78,8 @@ class SwapRequestController extends Controller
                         'message' => $request->message,
                         'status' => $request->status,
                         'created_at' => $request->created_at,
+                        'ratings' => $ratings,
+                        'rated' => $rated,
                     ];
                 }),
         ]);

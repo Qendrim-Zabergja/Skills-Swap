@@ -109,6 +109,13 @@
             <div class="space-y-4 w-full max-w-4xl">
               <div v-for="request in incomingRequests" :key="request.id"
                 class="flex items-center justify-between p-6 bg-white border rounded-lg w-full">
+                <!-- Show ratings given by you and received for this request -->
+                <div v-if="request.ratings && request.ratings.length > 0" class="flex flex-col text-xs mb-2">
+                  <div v-for="rating in request.ratings" :key="rating.id" class="flex items-center gap-2">
+                    <!-- <span v-if="rating.rater_id === props.user.id">You rated: <b>{{ rating.score }}</b> ⭐</span> -->
+                    <!-- <span v-else-if="rating.rated_user_id === props.user.id">Rated by other: <b>{{ rating.score }}</b> ⭐</span> -->
+                  </div>
+                </div>
                 <div class="flex items-center space-x-4">
                   <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                     <!-- {{ getInitials(request.user.name) }} -->
@@ -138,11 +145,11 @@
                     </button>
                   </template>
                   <template v-else-if="request.status === 'Accepted'">
-                    <Link :href="route('messages.show', request.user.id)"
+                    <Link v-if="request.user && request.user.id" :href="route('messages.show', request.user.id)"
                       class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 mr-4">
-                    Message
+                      Message
                     </Link>
-                    <button v-if="!request.rated" @click="openRatingModal(request)"
+                    <button v-if="!hasRatedByMe(request)" @click="openRatingModal(request)"
                       class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200">
                       Rate
                     </button>
@@ -199,6 +206,10 @@
                     class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
                   Message
                   </Link>
+                  <button v-if="request.status === 'Accepted' && !hasRatedByMe(request)" @click="openRatingModal(request)"
+                    class="ml-2 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200">
+                    Rate
+                  </button>
                 </div>
               </div>
             </div>
@@ -412,7 +423,13 @@
   <!-- Rating Modal -->
   <Modal :show="showRatingModal" @close="closeRatingModal">
     <div class="p-6">
-      <h2 class="text-lg font-medium mb-4">Rate your experience with {{ selectedRequest?.sender?.name }}</h2>
+      <h2 class="text-lg font-medium mb-4">
+  Rate your experience with
+  <span v-if="selectedRequest">
+    <!-- Show the other user's name -->
+    {{ props.user.id === selectedRequest.user?.id ? selectedRequest.recipient?.name : selectedRequest.user?.name }}
+  </span>
+</h2>
 
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
@@ -478,6 +495,12 @@ const newTeachingCategory = ref('');
 const newLearningSkill = ref('');
 const newLearningCategory = ref('');
 
+// Helper to check if the logged-in user has rated the other party for this request
+function hasRatedByMe(request) {
+  if (!request.ratings || !props.user) return false;
+  return request.ratings.some(rating => rating.rater_id === props.user.id);
+}
+
 // Form state
 const form = useForm({
   name: props.user?.name || '',
@@ -536,7 +559,7 @@ const loadMoreConversations = () => {
 };
 
 const openConversation = (conversation) => {
-  router.visit(route('messages.show', conversation.other_user.id));
+  router.visit(route('messages.show', conversation.other_props.user.id));
 };
 
 const formatDate = (dateString) => {
@@ -642,8 +665,10 @@ const saveProfile = () => {
 
 const openRatingModal = (request) => {
   selectedRequest.value = request;
+  ratingForm.score = 0; // Always reset to 0 so user must choose
+  ratingForm.comment = '';
   showRatingModal.value = true;
-};
+;}
 
 const closeRatingModal = () => {
   showRatingModal.value = false;
@@ -660,14 +685,23 @@ const submitRating = () => {
   ratingForm.post(`/requests/${requestId}/rate`, {
     preserveScroll: true,
     onSuccess: () => {
-      // Update the request to show it's been rated
-      if (props.incomingRequests) {
-        const request = props.incomingRequests.find(r => r.id === requestId);
-        if (request) {
-          request.rated = true;
-        }
+      // Mark as rated for both incoming and outgoing
+      let request = incomingRequests.value.find(r => r.id === requestId);
+      if (!request) {
+        request = outgoingRequests.value.find(r => r.id === requestId);
       }
-      // Close the modal and reset form
+      if (request) {
+        request.rated = true;
+        // Optionally push the new rating to the ratings array for instant UI feedback
+        request.ratings = request.ratings || [];
+        request.ratings.push({
+          id: Date.now(), // Temporary ID
+          rater_id: props.user.id,
+          rated_user_id: (props.user.id === request.user?.id ? request.recipient?.id : request.user?.id),
+          score: ratingForm.score,
+          comment: ratingForm.comment
+        });
+      }
       closeRatingModal();
     }
   });

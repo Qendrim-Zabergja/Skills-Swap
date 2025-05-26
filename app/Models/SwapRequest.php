@@ -53,10 +53,10 @@ class SwapRequest extends Model
     }
 
     /**
-     * Get the rating associated with this request.
+     * Get all ratings associated with this request.
      */
-    public function rating(): HasOne
+    public function ratings()
     {
-        return $this->hasOne(Rating::class, 'request_id');
+        return $this->hasMany(Rating::class, 'request_id');
     }
 }
