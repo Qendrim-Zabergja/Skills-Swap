@@ -111,7 +111,8 @@
                 class="flex items-center justify-between p-6 bg-white border rounded-lg w-full">
                 <div class="flex items-center space-x-4">
                   <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                    {{ getInitials(request.user.name) }}
+                    <!-- {{ getInitials(request.user.name) }} -->
+                      <img :src="request.user.profile_photo_url" alt="">
                   </div>
                   <div>
                     <div class="text-sm font-medium text-gray-900">{{ request.user.name }}</div>
@@ -172,7 +173,8 @@
                 </button>
                 <div class="flex items-center space-x-4">
                   <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                    {{ getInitials(request.recipient.name) }}
+                    <!-- {{ getInitials(request.recipient.name) }} -->
+                    <img :src="request.recipient.profile_photo_url" alt="" class="w-full h-full object-cover rounded-full">
                   </div>
                   <div>
                     <div class="text-sm font-medium text-gray-900">{{ request.recipient.name }}</div>
@@ -208,25 +210,31 @@
               <h3 class="text-lg font-medium">Recent Messages</h3>
             </div>
 
-            <div class="divide-y divide-gray-200">
+            <div class="divide-y divide-gray-200 max-w-5xl mx-auto w-full">
               <div v-for="conversation in conversations" :key="conversation.id"
-                class="p-4 hover:bg-gray-50 cursor-pointer" @click="openConversation(conversation)">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-900">
+                class="p-4 bg-white rounded-lg shadow hover:bg-gray-50 cursor-pointer transition mb-4 flex flex-col"
+                @click="openConversation(conversation)">
+                <div class="flex items-center w-full">
+                  <!-- Avatar -->
+                  <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 mr-4 overflow-hidden">
+                    <img v-if="conversation.other_user.profile_photo_url" :src="conversation.other_user.profile_photo_url" :alt="conversation.other_user.name" class="w-full h-full object-cover rounded-full" />
+                    <span v-else class="text-lg font-bold"><img :src=conversation.other_user.profile_photo_url alt=""></span>
+                  </div>
+                  <div class="flex-1 min-w-0 pr-4">
+                    <h4 class="text-lg font-semibold text-gray-900 truncate">
                       {{ conversation.other_user.name }}
                     </h4>
-                    <p class="text-sm text-gray-500 mt-1">
+                    <p class="text-base text-gray-700 mt-2 truncate">
                       {{ conversation.last_message.content }}
                     </p>
                   </div>
-                  <span class="text-xs text-gray-400">
+                  <span class="text-sm text-gray-400 whitespace-nowrap">
                     {{ formatDate(conversation.last_message.created_at) }}
                   </span>
                 </div>
-                <div class="mt-2">
+                <div class="mt-4">
                   <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    class="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-800">
                     {{ conversation.skill_offered }} ↔ {{ conversation.skill_wanted }}
                   </span>
                 </div>
@@ -452,7 +460,7 @@ const props = defineProps({
     default: () => []
   }
 });
-
+console.log("lll",props.incomingRequests);
 // State management
 const activeTab = ref('requests');
 const conversations = ref(props.initialConversations || []);
