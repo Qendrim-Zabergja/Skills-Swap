@@ -134,7 +134,8 @@
                             <!-- User Info -->
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                                    {{ getInitials(user.name) }}
+                                    <span v-if="!user.profile_photo">{{ getInitials(user.name) }}</span>
+                                    <img v-else :src="user.profile_photo" alt="Profile Photo" class="w-full h-full object-cover rounded-full">
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2">
@@ -351,6 +352,7 @@ const props = defineProps({
     users: Array,
     auth: Object,
 });
+console.log(props.users);
 
 const showRequestModal = ref(false);
 const selectedUser = ref(null);
