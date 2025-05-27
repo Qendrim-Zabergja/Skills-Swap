@@ -559,7 +559,11 @@ const loadMoreConversations = () => {
 };
 
 const openConversation = (conversation) => {
-  router.visit(route('messages.show', conversation.other_props.user.id));
+  if (conversation?.other_user?.id) {
+    router.visit(route('messages.show', conversation.other_user.id));
+  } else {
+    alert('User information is missing for this conversation.');
+  }
 };
 
 const formatDate = (dateString) => {
