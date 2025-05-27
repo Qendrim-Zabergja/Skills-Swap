@@ -174,4 +174,31 @@ class SwapRequestController extends Controller
 
         return back()->with('success', 'Request cancelled successfully.');
     }
+
+    /**
+     * Cancel a swap request via API (sender or recipient).
+     */
+    public function apiCancel(Request $request, SwapRequest $swapRequest)
+    {
+        if ($swapRequest->user_id !== auth()->id() && $swapRequest->recipient_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        if (!in_array($swapRequest->status, ['Pending', 'Accepted'])) {
+            return response()->json(['success' => false, 'message' => 'This request cannot be cancelled.'], 400);
+        }
+        $swapRequest->update(['status' => 'Cancelled']);
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Hard delete a swap request via API (sender or recipient).
+     */
+    public function destroy(Request $request, SwapRequest $swapRequest)
+    {
+        if ($swapRequest->user_id !== auth()->id() && $swapRequest->recipient_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        $swapRequest->delete();
+        return response()->json(['success' => true]);
+    }
 }

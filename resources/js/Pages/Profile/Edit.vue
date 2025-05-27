@@ -108,7 +108,15 @@
             <!-- Incoming Requests -->
             <div class="space-y-4 w-full max-w-4xl">
               <div v-for="request in incomingRequests" :key="request.id"
-                class="flex items-center justify-between p-6 bg-white border rounded-lg w-full">
+                class="group relative flex items-center justify-between p-6 bg-white border rounded-lg w-full">
+  <!-- Remove (X) button -->
+  <button @click="removeRequest(request.id, 'incoming')"
+    class="absolute top-2 right-2 p-1 text-gray-400 bg-gray-100 rounded-full shadow-sm z-50 hover:bg-red-500 hover:text-white transition"
+    title="Remove">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
                 <!-- Show ratings given by you and received for this request -->
                 <div v-if="request.ratings && request.ratings.length > 0" class="flex flex-col text-xs mb-2">
                   <div v-for="rating in request.ratings" :key="rating.id" class="flex items-center gap-2">
@@ -172,6 +180,14 @@
             <div class="space-y-4 w-full max-w-4xl">
               <div v-for="request in outgoingRequests" :key="request.id"
                 class="group relative p-6 bg-white border rounded-lg w-full">
+                <!-- Remove (X) button -->
+                <button @click="removeRequest(request.id, 'outgoing')"
+                  class="absolute top-2 right-2 p-1 text-gray-400 bg-gray-100 rounded-full shadow-sm z-50 hover:bg-red-500 hover:text-white transition"
+                  title="Remove">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
                 <button v-if="request.status === 'Pending'" @click="cancelRequest(request.id)"
                   class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-700 bg-gray-100 rounded-full shadow-sm z-50 hover:bg-gray-200">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -528,6 +544,24 @@ const categories = [
   'Photography',
   'Education'
 ];
+
+// Remove request from backend and UI
+const removeRequest = async (requestId, type) => {
+  try {
+    const response = await axios.delete(route('api.swap-requests.destroy', requestId));
+    if (response.data.success) {
+      if (type === 'incoming') {
+        incomingRequests.value = incomingRequests.value.filter(r => r.id !== requestId);
+      } else if (type === 'outgoing') {
+        outgoingRequests.value = outgoingRequests.value.filter(r => r.id !== requestId);
+      }
+    } else {
+      alert(response.data.message || 'Failed to remove request.');
+    }
+  } catch (error) {
+    alert('Failed to remove request.');
+  }
+};
 
 // Functions
 const fetchConversations = async (page = 1) => {

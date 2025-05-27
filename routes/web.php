@@ -52,6 +52,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Cancel swap request API route
+    Route::post('/swap-requests/{swapRequest}/cancel', [App\Http\Controllers\SwapRequestController::class, 'cancel'])->name('swap-requests.cancel');
+    // API: cancel swap request (sender or recipient)
+    Route::post('/api/swap-requests/{swapRequest}/cancel', [App\Http\Controllers\SwapRequestController::class, 'apiCancel'])->name('api.swap-requests.cancel');
+    // API: hard delete swap request (sender or recipient)
+    Route::delete('/api/swap-requests/{swapRequest}', [App\Http\Controllers\SwapRequestController::class, 'destroy'])->name('api.swap-requests.destroy');
+
     // Browse routes
     Route::get('/browse', [BrowseController::class, 'index'])->name('browse.index');
     // Skills routes
