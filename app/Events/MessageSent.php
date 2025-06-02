@@ -34,9 +34,22 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        Log::info('Broadcasting on channel', ['channel' => 'chat.' . $this->message->recipient_id]);
+        Log::info('Broadcasting on channels', [
+            'recipient_channel' => 'chat.' . $this->message->recipient_id,
+            'sender_channel' => 'user.' . $this->message->user_id,
+            'recipient_user_channel' => 'user.' . $this->message->recipient_id
+        ]);
+        
+        // Broadcast to both the recipient's chat channel and the user channels for both users
         return [
+            // Recipient's chat channel (for the conversation)
             new PrivateChannel('chat.' . $this->message->recipient_id),
+            
+            // Recipient's user channel (for notifications)
+            new PrivateChannel('user.' . $this->message->recipient_id),
+            
+            // Sender's user channel (for UI updates)
+            new PrivateChannel('user.' . $this->message->user_id),
         ];
     }
 

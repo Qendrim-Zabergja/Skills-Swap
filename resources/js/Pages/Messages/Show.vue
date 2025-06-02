@@ -104,6 +104,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import Echo from 'laravel-echo';
+import axios from 'axios';
 
 const props = defineProps({
     otherUser: Object,
@@ -168,8 +169,22 @@ const sendMessage = () => {
 
 let echo = null;
 
+// Function to mark all messages in this conversation as read
+const markMessagesAsRead = () => {
+    axios.post(route('messages.mark-conversation-read', props.otherUser.id))
+        .then(() => {
+            console.log('Marked all messages as read');
+        })
+        .catch(error => {
+            console.error('Error marking messages as read:', error);
+        });
+};
+
 onMounted(() => {
     scrollToBottom();
+    
+    // Mark messages as read when conversation is opened
+    markMessagesAsRead();
     
     // Set up direct Pusher listeners instead of using Echo
     // This ensures we're listening on the exact channel names from the logs

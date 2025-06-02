@@ -87,6 +87,8 @@ Route::middleware('auth')->group(function () {
         ->name('messages.conversations');
     Route::get('/messages/{user}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{user}', [MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/{conversation}/mark-as-read', [MessageController::class, 'markAsRead'])->name('messages.mark-as-read');
+    Route::post('/messages/{user}/mark-conversation-read', [MessageController::class, 'markConversationAsRead'])->name('messages.mark-conversation-read');
 });
 
 Route::get('/dashboard', function () {

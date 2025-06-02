@@ -145,14 +145,15 @@ class MessageController extends Controller
 
         // Broadcast the message
         try {
-            Log::info('Broadcasting message to channel chat.' . $user->id, [
+            Log::info('Broadcasting message to channels', [
                 'message'      => $message->toArray(),
                 'sender_id'    => $currentUser->id,
                 'recipient_id' => $user->id,
             ]);
 
-            broadcast(new MessageSent($message))->toOthers();
-
+            // Broadcast to all channels (don't use toOthers() as we want to ensure delivery)
+            broadcast(new MessageSent($message));
+            
             Log::info('Message broadcast completed');
         } catch (\Exception $e) {
             Log::error('Broadcasting failed: ' . $e->getMessage(), [
@@ -218,6 +219,8 @@ class MessageController extends Controller
                     'last_message'  => [
                         'content'    => $lastMessage->content,
                         'created_at' => $lastMessage->created_at,
+                        'is_read'    => !is_null($lastMessage->read_at),
+                        'user_id'    => $lastMessage->user_id,
                     ],
                 ];
             })
@@ -232,5 +235,40 @@ class MessageController extends Controller
             ]);
             return response()->json(['error' => 'An error occurred while fetching conversations'], 500);
         }
+    }
+
+    /**
+     * Mark a specific conversation as read
+     */
+    public function markAsRead(Request $request, $conversation)
+    {
+        $user = Auth::user();
+        
+        // Mark the message as read
+        Message::where('id', $conversation)
+            ->where('recipient_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+            
+        return response()->json(['success' => true]);
+    }
+    
+    /**
+     * Mark all messages in a conversation with a specific user as read
+     */
+    public function markConversationAsRead(Request $request, User $user)
+    {
+        $currentUser = Auth::user();
+        
+        // Mark all messages from the other user as read
+        $updated = Message::where('user_id', $user->id)
+            ->where('recipient_id', $currentUser->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+            
+        return response()->json([
+            'success' => true,
+            'count' => $updated
+        ]);
     }
 }
