@@ -171,55 +171,87 @@ let echo = null;
 onMounted(() => {
     scrollToBottom();
     
-    // Initialize Echo and listen for messages
-    echo = window.Echo.private(`chat.${props.auth.user.id}`)
-        .listen('MessageSent', (event) => {
-            console.log('Received message event:', event);
+    // Set up direct Pusher listeners instead of using Echo
+    // This ensures we're listening on the exact channel names from the logs
+    const userId = props.auth.user.id;
+    const otherUserId = props.otherUser.id;
+    
+    // Listen for incoming messages on the user's channel
+    const myChannelName = `private-chat.${userId}`;
+    console.log(`Directly subscribing to channel: ${myChannelName}`);
+    
+    // Get the raw Pusher instance
+    const pusher = window.Echo.connector.pusher;
+    
+    // Subscribe to my channel
+    const myChannel = pusher.subscribe(myChannelName);
+    myChannel.bind('MessageSent', (data) => {
+        console.log(`Received message on ${myChannelName}:`, data);
+        
+        // Check if message is from the other user we're chatting with
+        if (parseInt(data.message.user_id) === parseInt(otherUserId)) {
+            console.log('Adding message from user:', data.message.user_id);
             
-            // Check if message is from the other user we're chatting with
-            if (parseInt(event.message.user_id) === parseInt(props.otherUser.id)) {
-                console.log('Adding message from user:', event.message.user_id);
-                console.log('Message content:', event.message.content);
-                
-                // Add new message at the end
-                localMessages.value.push({
-                    id: event.message.id,
-                    content: event.message.content,
-                    time: event.message.time,
-                    date: event.message.date,
-                    is_mine: false,
-                });
-                
-                nextTick(() => {
-                    scrollToBottom();
-                });
-            } else {
-                console.log('Message not from current chat partner', {
-                    messageFromId: event.message.user_id,
-                    currentChatPartnerId: props.otherUser.id
-                });
-            }
-        });
-
-    // Debug channel subscription
-    window.Echo.connector.pusher.connection.bind('state_change', (states) => {
+            // Add new message to the conversation
+            localMessages.value.push({
+                id: data.message.id,
+                content: data.message.content,
+                time: data.message.time,
+                date: data.message.date,
+                is_mine: false,
+            });
+            
+            nextTick(() => {
+                scrollToBottom();
+            });
+        }
+    });
+    
+    // Subscribe to other user's channel
+    const otherChannelName = `private-chat.${otherUserId}`;
+    console.log(`Directly subscribing to channel: ${otherChannelName}`);
+    
+    const otherChannel = pusher.subscribe(otherChannelName);
+    otherChannel.bind('MessageSent', (data) => {
+        console.log(`Received message on ${otherChannelName}:`, data);
+        
+        // Check if this message is relevant to our conversation
+        if (parseInt(data.message.recipient_id) === parseInt(userId) && 
+            parseInt(data.message.user_id) === parseInt(otherUserId)) {
+            
+            // Add new message to the conversation
+            localMessages.value.push({
+                id: data.message.id,
+                content: data.message.content,
+                time: data.message.time,
+                date: data.message.date,
+                is_mine: false,
+            });
+            
+            nextTick(() => {
+                scrollToBottom();
+            });
+        }
+    });
+    
+    // Debug Pusher connection
+    pusher.connection.bind('state_change', (states) => {
         console.log('Pusher state changed:', states);
-    });
-
-    echo.on('subscription_succeeded', () => {
-        console.log('Successfully subscribed to chat channel:', `chat.${props.auth.user.id}`);
-    });
-
-    echo.on('subscription_error', (error) => {
-        console.error('Failed to subscribe to chat channel:', error);
     });
 });
 
 onUnmounted(() => {
-    // Clean up Echo listener
-    if (echo) {
-        echo.stopListening('MessageSent');
-        window.Echo.leave(`chat.${props.auth.user.id}`);
-    }
+    // Clean up Pusher subscriptions
+    const pusher = window.Echo.connector.pusher;
+    
+    // Unsubscribe from my channel
+    const myChannelName = `private-chat.${props.auth.user.id}`;
+    pusher.unsubscribe(myChannelName);
+    console.log(`Unsubscribed from channel: ${myChannelName}`);
+    
+    // Unsubscribe from other user's channel
+    const otherChannelName = `private-chat.${props.otherUser.id}`;
+    pusher.unsubscribe(otherChannelName);
+    console.log(`Unsubscribed from channel: ${otherChannelName}`);
 });
 </script>

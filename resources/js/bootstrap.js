@@ -33,10 +33,10 @@ window.Echo = new Echo({
     forceTLS: true,
     encrypted: true,
     enabledTransports: ['ws', 'wss'],
-    host: 'api-eu.pusher.com',
+    disableStats: true, // Disable stats which can cause issues
     auth: {
         headers: {
-            'X-CSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1],
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1],
         }
     }
 });
