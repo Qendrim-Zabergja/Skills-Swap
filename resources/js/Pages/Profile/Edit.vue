@@ -531,7 +531,7 @@ onMounted(() => {
     
     // IMPORTANT: Listen for all MessageSent events on the user's private channel
     window.Echo.private(`user.${props.user.id}`)
-      .listen('.MessageSent', (e) => {
+      .listen('MessageSent', (e) => {
         console.log('🔔 MessageSent event received on user channel:', e);
         
         // If I'm the recipient of this message, show the notification badge

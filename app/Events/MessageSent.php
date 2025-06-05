@@ -8,11 +8,12 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class MessageSent implements ShouldBroadcast
+class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -34,21 +35,33 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        Log::info('Broadcasting on channels', [
-            'recipient_channel' => 'chat.' . $this->message->recipient_id,
-            'sender_channel' => 'user.' . $this->message->user_id,
-            'recipient_user_channel' => 'user.' . $this->message->recipient_id
+        Log::info('Broadcasting MessageSent event', [
+            'message_id' => $this->message->id,
+            'content' => $this->message->content,
+            'sender_id' => $this->message->user_id,
+            'recipient_id' => $this->message->recipient_id,
+            'created_at' => $this->message->created_at
         ]);
         
-        // Broadcast to both the recipient's chat channel and the user channels for both users
+        Log::info('Broadcasting on channels', [
+            'recipient_chat_channel' => 'chat.' . $this->message->recipient_id,
+            'sender_chat_channel' => 'chat.' . $this->message->user_id,
+            'recipient_user_channel' => 'user.' . $this->message->recipient_id,
+            'sender_user_channel' => 'user.' . $this->message->user_id
+        ]);
+        
+        // Broadcast to both users' chat and user channels
         return [
-            // Recipient's chat channel (for the conversation)
+            // Recipient's chat channel
             new PrivateChannel('chat.' . $this->message->recipient_id),
             
-            // Recipient's user channel (for notifications)
+            // Sender's chat channel
+            new PrivateChannel('chat.' . $this->message->user_id),
+            
+            // Recipient's user channel
             new PrivateChannel('user.' . $this->message->recipient_id),
             
-            // Sender's user channel (for UI updates)
+            // Sender's user channel
             new PrivateChannel('user.' . $this->message->user_id),
         ];
     }

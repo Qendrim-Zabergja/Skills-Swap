@@ -23,8 +23,52 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
+// Enable Pusher logging - set to maximum verbosity
+Pusher.logToConsole = true;
+
+// Add global Pusher debug functions
+window.debugPusher = {
+    // Get all subscribed channels
+    getChannels: function() {
+        if (window.Echo && window.Echo.connector && window.Echo.connector.pusher) {
+            return window.Echo.connector.pusher.channels.channels;
+        }
+        return 'Echo or Pusher not initialized';
+    },
+    
+    // Force reconnection
+    reconnect: function() {
+        if (window.Echo && window.Echo.connector && window.Echo.connector.pusher) {
+            window.Echo.connector.pusher.connection.disconnect();
+            setTimeout(() => window.Echo.connector.pusher.connection.connect(), 1000);
+            return 'Reconnecting...';
+        }
+        return 'Echo or Pusher not initialized';
+    }
+};
+
 // Enable Pusher logging
 Pusher.logToConsole = true;
+
+// Get CSRF token from meta tag or cookie
+const getCSRFToken = () => {
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (metaToken) {
+        console.log('Using CSRF token from meta tag:', metaToken);
+        return metaToken;
+    }
+    
+    // Try to get from cookie
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    const cookieToken = match ? decodeURIComponent(match[1]) : null;
+    if (cookieToken) {
+        console.log('Using CSRF token from cookie:', cookieToken);
+        return cookieToken;
+    }
+    
+    console.warn('No CSRF token found!');
+    return '';
+};
 
 window.Echo = new Echo({
     broadcaster: 'pusher',
@@ -34,11 +78,24 @@ window.Echo = new Echo({
     encrypted: true,
     enabledTransports: ['ws', 'wss'],
     disableStats: true, // Disable stats which can cause issues
+    authEndpoint: '/broadcasting/auth', // Explicitly set the auth endpoint
+    csrfToken: getCSRFToken(), // Add CSRF token directly
     auth: {
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1],
+            'X-CSRF-TOKEN': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
         }
-    }
+    },
+    // Enhanced options for better connection handling
+    activityTimeout: 30000, // Increase timeout to prevent disconnects
+    pongTimeout: 15000,
+    // Enable detailed logging
+    logToConsole: true,
+    // Automatically reconnect if connection is lost
+    enabledTransports: ['ws', 'wss', 'xhr_streaming', 'xhr_polling'],
+    // Retry connection if it fails
+    autoReconnect: true
 });
 
 // Debug Pusher connection
