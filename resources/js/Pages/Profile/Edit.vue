@@ -97,8 +97,11 @@
               <button @click="activeTab = 'messages'" :class="{
                 'border-b-2 border-gray-900 text-gray-900': activeTab === 'messages',
                 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'messages'
-              }" class="py-4 px-1 text-sm font-medium">
+              }" class="py-4 px-1 text-sm font-medium relative">
                 Messages
+                <span v-if="unreadMessages > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {{ unreadMessages }}
+                </span>
               </button>
             </div>
           </div>
@@ -232,36 +235,35 @@
           </div>
 
           <!-- Messages Tab Content -->
-          <div v-if="activeTab === 'messages'" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div class="p-4 border-b border-gray-200">
-              <h3 class="text-lg font-medium">Recent Messages</h3>
-            </div>
-
-            <div class="divide-y divide-gray-200 max-w-5xl mx-auto w-full">
+          <div v-if="activeTab === 'messages'">
+            <div class="space-y-4 w-full" style="max-width: 90%;">
               <div v-for="conversation in conversations" :key="conversation.id"
-                class="p-4 bg-white rounded-lg shadow hover:bg-gray-50 cursor-pointer transition mb-4 flex flex-col"
+                class="group relative flex flex-col p-6 bg-white border rounded-lg w-full cursor-pointer"
+                style="min-width: 540px; width: 90%;"
                 @click="openConversation(conversation)">
-                <div class="flex items-center w-full">
-                  <!-- Avatar -->
-                  <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 mr-4 overflow-hidden">
-                    <img v-if="conversation.other_user.profile_photo_url" :src="conversation.other_user.profile_photo_url" :alt="conversation.other_user.name" class="w-full h-full object-cover rounded-full" />
-                    <span v-else class="text-lg font-bold"><img :src=conversation.other_user.profile_photo_url alt=""></span>
+                <div class="flex items-center justify-between w-full mb-3">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                      <img v-if="conversation.other_user.profile_photo_url" :src="conversation.other_user.profile_photo_url" :alt="conversation.other_user.name" class="w-full h-full object-cover" />
+                      <span v-else class="text-gray-400">{{ getInitials(conversation.other_user.name) }}</span>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">{{ conversation.other_user.name }}</div>
+                      <div class="text-xs text-gray-400">
+                        {{ formatDate(conversation.last_message.created_at) }}
+                      </div>
+                    </div>
                   </div>
-                  <div class="flex-1 min-w-0 pr-4">
-                    <h4 class="text-lg font-semibold text-gray-900 truncate">
-                      {{ conversation.other_user.name }}
-                    </h4>
-                    <p class="text-base text-gray-700 mt-2 truncate">
-                      {{ conversation.last_message.content }}
-                    </p>
-                  </div>
-                  <span class="text-sm text-gray-400 whitespace-nowrap">
-                    {{ formatDate(conversation.last_message.created_at) }}
-                  </span>
                 </div>
-                <div class="mt-4">
-                  <span
-                    class="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-800">
+                
+                <!-- Message preview -->
+                <div class="text-sm text-gray-500 mb-3 pl-14">
+                  {{ conversation.last_message.content }}
+                </div>
+                
+                <!-- Skills being swapped -->
+                <div class="flex items-center pl-14">
+                  <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-700">
                     {{ conversation.skill_offered }} ↔ {{ conversation.skill_wanted }}
                   </span>
                 </div>
@@ -500,7 +502,96 @@ const conversations = ref(props.initialConversations || []);
 const currentPage = ref(1);
 const lastPage = ref(1);
 const isLoading = ref(false);
+const unreadMessages = ref(0);
 const hasMoreConversations = computed(() => currentPage.value < lastPage.value);
+
+// Calculate unread messages count
+const calculateUnreadMessages = () => {
+  // Only count messages that were sent by others (not by the current user)
+  unreadMessages.value = conversations.value.filter(conversation => 
+    conversation.last_message && 
+    !conversation.last_message.is_read && 
+    conversation.last_message.user_id !== props.user.id
+  ).length;
+  
+  console.log('Unread messages:', unreadMessages.value);
+};
+
+// Calculate unread messages and fetch conversations on component mount
+onMounted(() => {
+  // Immediately calculate unread messages based on initial data
+  calculateUnreadMessages();
+  
+  // Then fetch fresh data from the server
+  fetchConversations();
+  
+  // Listen for new messages via Echo (real-time updates)
+  if (window.Echo) {
+    console.log(`Setting up Echo listeners for user ID: ${props.user.id}`);
+    
+    // IMPORTANT: Listen for all MessageSent events on the user's private channel
+    window.Echo.private(`user.${props.user.id}`)
+      .listen('.MessageSent', (e) => {
+        console.log('🔔 MessageSent event received on user channel:', e);
+        
+        // If I'm the recipient of this message, show the notification badge
+        if (e.message && e.message.recipient_id === props.user.id && e.message.user_id !== props.user.id) {
+          console.log('📩 I am the recipient - showing notification badge');
+          
+          // Increment unread count immediately for the badge
+          unreadMessages.value += 1;
+          console.log(`Unread messages count increased to: ${unreadMessages.value}`);
+          
+          // Refresh conversations in the background
+          fetchConversations();
+        }
+      });
+    
+    // Also listen directly on the Pusher instance for broader event capture
+    const pusher = window.Echo.connector.pusher;
+    
+    // Listen on the general channel for any message events
+    pusher.subscribe('private-user.' + props.user.id)
+      .bind('MessageSent', (data) => {
+        console.log('📨 Message event from Pusher subscription:', data);
+        
+        // Make sure we only count messages sent TO us, not FROM us
+        if (data.message && 
+            data.message.recipient_id === props.user.id && 
+            data.message.user_id !== props.user.id) {
+          console.log('📬 Incoming message detected - updating badge');
+          unreadMessages.value += 1;
+          // Force reactive update
+          unreadMessages.value = parseInt(unreadMessages.value);
+          console.log(`Badge count updated to: ${unreadMessages.value}`);
+        }
+      });
+      
+    // Listen on the chat channel as well for redundancy
+    pusher.subscribe('private-chat.' + props.user.id)
+      .bind('MessageSent', (data) => {
+        console.log('💬 Message received on chat channel:', data);
+        
+        if (data.message && 
+            data.message.recipient_id === props.user.id && 
+            data.message.user_id !== props.user.id) {
+          console.log('🔴 Updating badge from chat channel');
+          unreadMessages.value += 1;
+          // Force reactive update
+          unreadMessages.value = parseInt(unreadMessages.value);
+        }
+      });
+      
+    // Debug connection status
+    pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher connected successfully');
+    });
+    
+    pusher.connection.bind('error', (err) => {
+      console.error('❌ Pusher connection error:', err);
+    });
+  }
+});
 const showEditModal = ref(false);
 const showRatingModal = ref(false);
 const selectedRequest = ref(null);
@@ -576,6 +667,9 @@ const fetchConversations = async (page = 1) => {
     
     currentPage.value = page;
     lastPage.value = Math.ceil(response.data.length / 10); // Assuming 10 items per page
+    
+    // Calculate unread messages after loading conversations
+    calculateUnreadMessages();
   } catch (error) {
     console.error('Error fetching conversations:', error);
     if (page === 1) {
@@ -594,6 +688,20 @@ const loadMoreConversations = () => {
 
 const openConversation = (conversation) => {
   if (conversation?.other_user?.id) {
+    // Mark conversation as read before navigating
+    if (conversation.last_message && !conversation.last_message.is_read && 
+        conversation.last_message.user_id !== props.user.id) {
+      // Update local state to reflect message is read
+      conversation.last_message.is_read = true;
+      // Recalculate unread count
+      calculateUnreadMessages();
+      
+      // Optionally send request to backend to mark as read
+      axios.post(route('messages.mark-as-read', conversation.id))
+        .catch(error => console.error('Error marking conversation as read:', error));
+    }
+    
+    // Navigate to conversation
     router.visit(route('messages.show', conversation.other_user.id));
   } else {
     alert('User information is missing for this conversation.');
