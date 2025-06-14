@@ -5,8 +5,13 @@
 
 [build.environment]
   NODE_VERSION = "18.0.0"
+  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_VERBOSE = "true"
+
+[build.environment.PHP_VERSION]
+  version = "8.2"
 
 [[redirects]]
   from = "/*"
-  to = "/index.php"
+  to = "/index.html"
   status = 200
