@@ -58,8 +58,8 @@
             <section class="py-8 px-4 max-w-6xl mx-auto">
                 <h2 class="text-xl font-semibold mb-8">Featured Skill Swappers</h2>
                 
-                <div v-if="featuredUsers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                    <div v-for="user in featuredUsers" :key="user.id" class="bg-white rounded-lg p-6 border border-gray-100">
+                <div v-if="filteredFeaturedUsers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                    <div v-for="user in filteredFeaturedUsers" :key="user.id" class="bg-white rounded-lg p-6 border border-gray-100">
                         <!-- User Info Header -->
                         <div class="flex items-start justify-between mb-4">
                             <div class="flex items-center">
@@ -144,7 +144,7 @@
                     </div>
                 </div>
 
-                <div v-else class="text-center py-10 bg-gray-50 rounded-lg mb-8">
+                <div v-else-if="filteredFeaturedUsers.length === 0" class="text-center py-10 bg-gray-50 rounded-lg mb-8">
                     <p class="text-gray-500">No featured users available yet. Be the first to share your expertise!</p>
                     <Link v-if="$page.props.auth.user" :href="route('profile.edit')"
                         class="bg-black text-white px-4 py-2 rounded mt-4 inline-block">Add Your Skills</Link>
@@ -241,6 +241,17 @@ export default defineComponent({
     setup() {
         const imageLoadErrors = ref(new Set());
         return { imageLoadErrors };
+    },
+    
+    computed: {
+        filteredFeaturedUsers() {
+            // Filter out the current user from featured users
+            if (!this.$page.props.auth.user) {
+                return this.featuredUsers;
+            }
+            const currentUserId = this.$page.props.auth.user.id;
+            return this.featuredUsers.filter(user => user.id !== currentUserId);
+        }
     },
 
     data() {

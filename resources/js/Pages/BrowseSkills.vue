@@ -416,7 +416,10 @@ const filteredUsers = computed(() => {
   if (props.skills.length > 0) {
     console.log('First user photo URL:', props.skills[0].profile_photo_url);
   }
-  let filtered = [...props.skills];
+  
+  // Filter out the current user
+  const currentUserId = props.auth.user.id;
+  let filtered = props.skills.filter(user => user.id !== currentUserId);
   console.log('First user:', filtered[0]);
 
   // Apply search filter
