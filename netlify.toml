@@ -1,0 +1,12 @@
+[build]
+  command = "npm install && npm run build"
+  publish = "public"
+  functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "18.0.0"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.php"
+  status = 200
