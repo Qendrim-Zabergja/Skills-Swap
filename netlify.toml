@@ -7,9 +7,7 @@
   NODE_VERSION = "18.0.0"
   NPM_FLAGS = "--legacy-peer-deps"
   NPM_VERBOSE = "true"
-
-[build.environment.PHP_VERSION]
-  version = "8.2"
+  PHP_VERSION = "8.2"
 
 [[redirects]]
   from = "/*"
