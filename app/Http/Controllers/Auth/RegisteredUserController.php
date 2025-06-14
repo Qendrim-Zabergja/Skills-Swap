@@ -78,9 +78,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('home', absolute: false));
+        // Do not log in user automatically. Redirect to verification notice.
+        return redirect()->route('verification.notice')->with('status', 'verification-link-sent');
 
     }
 }

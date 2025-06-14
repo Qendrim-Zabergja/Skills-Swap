@@ -70,6 +70,13 @@ class LoginRequest extends FormRequest
         }
         
         // Try to authenticate
+        if ($user && !$user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => 'Email address not verified. Please check your email for a verification link.',
+                'verification_required' => true,
+            ]);
+        }
+
         if (!Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([

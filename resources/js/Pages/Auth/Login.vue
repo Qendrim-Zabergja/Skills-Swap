@@ -1,4 +1,16 @@
 <template>
+  <div v-if="showVerificationAlert" class="mb-4 p-3 rounded bg-yellow-100 border border-yellow-300 text-yellow-800">
+    <p>{{ verificationMessage }}</p>
+    <button
+      @click="resendVerificationEmail"
+      :disabled="resending"
+      class="mt-2 px-3 py-1 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-300 disabled:opacity-50"
+    >
+      {{ resending ? 'Resending...' : 'Resend verification email' }}
+    </button>
+    <p v-if="resendStatus" class="mt-2 text-sm text-green-700">{{ resendStatus }}</p>
+    <p v-if="resendError" class="mt-2 text-sm text-red-600">{{ resendError }}</p>
+  </div>
 
   <Head title="Log in" />
 
@@ -131,6 +143,12 @@ export default defineComponent({
     });
 
     const errors = ref({});
+
+    const showVerificationAlert = ref(false);
+    const verificationMessage = ref('');
+    const resending = ref(false);
+    const resendStatus = ref('');
+    const resendError = ref('');
 
     const validateForm = () => {
       errors.value = {};
