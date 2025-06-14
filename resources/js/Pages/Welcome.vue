@@ -137,9 +137,14 @@
                             <div class="text-xs text-gray-500">
                                 Member since {{ new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
                             </div>
-                            <button @click="openRequestModal(user)" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800">
+                            <button 
+                                v-if="$page.props.auth.user && $page.props.auth.user.id !== user.id"
+                                @click="openRequestModal(user)" 
+                                class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800"
+                            >
                                 Request Swap
                             </button>
+                            <div v-else class="w-24"></div> <!-- Empty div to maintain layout -->
                         </div>
                     </div>
                 </div>

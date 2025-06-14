@@ -275,11 +275,13 @@
                                     Member since {{ formatDate(user.created_at) }}
                                 </div>
                                 <button 
+                                    v-if="auth.user && auth.user.id !== user.id"
                                     @click="openRequestModal(user)"
                                     class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800"
                                 >
                                     Request Swap
                                 </button>
+                                <div v-else class="w-24"></div> <!-- Empty div to maintain layout -->
                             </div>
                         </div>
                     </div>

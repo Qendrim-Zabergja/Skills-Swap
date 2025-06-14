@@ -226,11 +226,13 @@
                   {{ user.swaps_completed || 0 }} swaps completed
                 </div>
                 <button 
+                  v-if="auth.user && auth.user.id !== user.id"
                   @click="requestSwap(user.id)"
                   class="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
                 >
                   Request Swap
                 </button>
+                <div v-else class="w-24"></div> <!-- Empty div to maintain layout -->
               </div>
             </div>
           </div>
