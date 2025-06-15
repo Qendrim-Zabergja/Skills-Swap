@@ -1,22 +1,12 @@
 [build]
 builder = "nixpacks"
 
-[build.nixpacks]
-cmds = [
-  "composer install --no-dev --optimize-autoloader --ignore-platform-reqs",
-  "npm ci",
-  "npm run build"
-]
-
 [deploy]
-startCommand = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+restartPolicyType = "on-failure"
+replicas = 1
 
-[variables]
+[environments.production]
 APP_ENV = "production"
 APP_DEBUG = "false"
-LOG_CHANNEL = "stderr"
-LOG_LEVEL = "info"
