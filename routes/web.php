@@ -16,11 +16,15 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin'    => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//     ]);
+// })->name('home');
+
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin'    => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
+    return response()->json(['status' => 'healthy', 'app' => 'Laravel']);
 })->name('home');
 Route::get('/about', function () {
     return Inertia::render('About');
