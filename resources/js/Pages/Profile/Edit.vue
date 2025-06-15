@@ -529,6 +529,8 @@ onMounted(() => {
   if (window.Echo) {
     console.log(`Setting up Echo listeners for user ID: ${props.user.id}`);
     
+
+    
     // IMPORTANT: Listen for all MessageSent events on the user's private channel
     window.Echo.private(`user.${props.user.id}`)
       .listen('MessageSent', (e) => {
