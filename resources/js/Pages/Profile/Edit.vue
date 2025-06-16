@@ -454,12 +454,12 @@
         <RatingStars v-model="ratingForm.score" :readonly="false" :show-value="false" />
       </div>
 
-      <div class="mb-4">
+      <!-- <div class="mb-4">
         <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">Comment (Optional)</label>
         <textarea v-model="ratingForm.comment" rows="3"
           class="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring focus:ring-gray-900 focus:ring-opacity-50"
           placeholder="Share your experience..."></textarea>
-      </div>
+      </div> -->
 
       <div class="flex justify-end space-x-3">
         <button @click="closeRatingModal"
