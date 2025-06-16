@@ -217,7 +217,7 @@
 
 <script>
 import { defineComponent, ref } from 'vue';
-import { Head } from '@inertiajs/inertia-vue3';
+import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import Navbar from '../Components/Navbar.vue';
 import SkillExchangeModal from '../Components/SkillExchangeModal.vue';
